@@ -11,11 +11,15 @@ void mft_init(MFT **mft) {
 
 	int i;
 	for (i = 0; i < (*mft) -> size; i++) {
-		MFT_ITEM item;
+		MFT_ITEM *item;
 		mft_item_init(&item);
 		
 		(*mft) -> items[i] = item; 
 	}
+
+	//TODO
+	//MFT_FRAGMENT fragments[MFT_FRAGMENTS_COUNT];
+	//mft_fragment_init();
 }
 
 void mft_item_init(MFT_ITEM **item) {
@@ -24,7 +28,7 @@ void mft_item_init(MFT_ITEM **item) {
 	(*item) -> isDirectory = -1;                           
 	(*item) -> item_order = -1;                        
 	(*item) -> item_order_total = -1;              
-	(*item) -> item_size = -1;                  
+	(*item) -> item_size = -1;        
 }
 
 void mft_fragment_init() {
@@ -34,6 +38,4 @@ void mft_fragment_init() {
 void print_mft(MFT *mft) {
 	printf("\nMFT:\n----------------\n");
 	printf("Size: %d B (10%% of disk space)\n", mft -> size);
-
-	//TODO mft items print
 }

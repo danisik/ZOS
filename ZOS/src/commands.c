@@ -3,7 +3,7 @@
 #include <string.h>
 #include "header.h"
 
-void copy_file() {
+void copy_file(VFS **vfs, char *tok) {
 
 	/*
 	1) Zkopíruje soubor s1 do umístění s2
@@ -15,7 +15,7 @@ void copy_file() {
 	*/
 }
 
-void move_file() {
+void move_file(VFS **vfs, char *tok) {
 
 	/*
 	2) Přesune soubor s1 do umístění s2
@@ -27,7 +27,7 @@ void move_file() {
 	*/
 }
 
-void remove_file() {
+void remove_file(VFS **vfs, char *tok) {
 
 	/*
 	3) Smaže soubor s1
@@ -38,7 +38,7 @@ void remove_file() {
 	*/
 }
 
-void make_directory() {
+void make_directory(VFS **vfs, char *tok) {
 
 	/*
 	4) Vytvoří adresář a1
@@ -50,7 +50,7 @@ void make_directory() {
 	*/
 }
 
-void remove_empty_directory() {
+void remove_empty_directory(VFS **vfs, char *tok) {
 
 	/*
 	5) Smaže prázdný adresář a1
@@ -62,7 +62,7 @@ void remove_empty_directory() {
 	*/
 }
 
-void print_directory() {
+void print_directory(VFS *vfs, char *tok) {
 	/*
 	6) Vypíše obsah adresáře a1
 	ls a1
@@ -73,7 +73,7 @@ void print_directory() {
 	*/
 }
 
-void print_file() {
+void print_file(VFS *vfs, char *tok) {
 
 	/*
 	7) Vypíše obsah souboru s1
@@ -84,7 +84,7 @@ void print_file() {
 	*/
 }
 
-void move_to_directory() {
+void move_to_directory(VFS **vfs, char *tok) {
 
 	/*
 	8) Změní aktuální cestu do adresáře a1
@@ -95,7 +95,7 @@ void move_to_directory() {
 	*/
 }
 
-void actual_directory() {
+void actual_directory(VFS *vfs) {
 	
 	/*
 	9) Vypíše aktuální cestu
@@ -105,7 +105,7 @@ void actual_directory() {
 	*/
 }
 
-void mft_item_info() {
+void mft_item_info(VFS *vfs, char *tok) {
 
 	/*
 	10) Vypíše informace o souboru/adresáři s1/a1 (v jakých fragmentech/clusterech se nachází),
@@ -117,7 +117,7 @@ void mft_item_info() {
 	*/
 }
 
-void hd_to_pseudo() {
+void hd_to_pseudo(VFS **vfs, char *tok) {
 
 	/*
 	11) Nahraje soubor s1 z pevného disku do umístění s2 v pseudoNTFS
@@ -129,7 +129,7 @@ void hd_to_pseudo() {
 	*/
 }
 
-void pseudo_to_hd() {
+void pseudo_to_hd(VFS **vfs, char *tok) {
 
 	/*
 	12) Nahraje soubor s1 z pseudoNTFS do umístění s2 na pevném disku
@@ -141,19 +141,21 @@ void pseudo_to_hd() {
 	*/
 }
 
-void load_commands() {
-
-	/*
-	13) Načte soubor z pevného disku, ve kterém budou jednotlivé příkazy a začne je sekvenčně
-	vykonávat. Formát je 1 příkaz/1řádek
-	load s1
-	Možný výsledek:
-	OK	
-	FILE NOT FOUND (není zdroj)
-	*/
+int load_commands(FILE **file_with_commands, char *tok) {
+	
+	tok = strtok(NULL, " \n");
+	(*file_with_commands) = fopen(tok, "r");
+	if ((*file_with_commands) != NULL) {
+		printf("OK\n");       
+		return 1;
+	}
+        else {
+		printf("FILE NOT FOUND\n");
+		return 0;
+	}
 }
 
-void file_formatting() {
+void file_formatting(VFS **vfs, char *tok) {
 
 	/*
 	14) Příkaz provede formát souboru, který byl zadán jako parametr při spuštení programu na
@@ -164,4 +166,37 @@ void file_formatting() {
 	OK
 	CANNOT CREATE FILE
 	*/
+}
+
+void defrag() {
+	/*
+	Defragmentace (defrag) – pokud login studenta začíná a-i
+	Soubory se budou skládat pouze z 1 fragmentu (předpokládáme dostatek volného místa –
+	minimálně ve velikosti největšího souboru).
+	*/
+}
+
+void full_info(VFS *vfs) {
+	print_vfs(vfs);
+}
+
+void commands_help() {
+	printf("Commands:\n");
+	printf("%s\n", COPY_FILE);
+	printf("%s\n", MOVE_FILE);
+	printf("%s\n", REMOVE_FILE);
+	printf("%s\n", MAKE_DIRECTORY);
+	printf("%s\n", REMOVE_EMPTY_DIRECTORY);
+	printf("%s\n", PRINT_DIRECTORY);
+	printf("%s\n", PRINT_FILE);
+	printf("%s\n", MOVE_TO_DIRECTORY);
+	printf("%s\n", ACTUAL_DIRECTORY);
+	printf("%s\n", MFT_ITEM_INFO);
+	printf("%s\n", HD_TO_PSEUDO);
+	printf("%s\n", PSEUDO_TO_HD);
+	printf("%s\n", LOAD_COMMANDS);
+	printf("%s\n", FILE_FORMATTING);
+	printf("%s\n", DEFRAG);
+	printf("%s\n", FULL_INFO);
+	printf("%s\n", HELP);
 }
