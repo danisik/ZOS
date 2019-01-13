@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 			actual_directory(vfs);
 		}
 		else if (strncmp(tok, MFT_ITEM_INFO, strlen(MFT_ITEM_INFO)) == 0) {
-			mft_item_info(vfs, tok); //not implemented
+			mft_item_info(vfs, tok); //need to find item with given name in tok
 		}
 		else if (strncmp(tok, HD_TO_PSEUDO, strlen(HD_TO_PSEUDO)) == 0) {
 			hd_to_pseudo(&vfs, tok); //not implemented

@@ -29,6 +29,7 @@ void mft_item_init(MFT_ITEM **item) {
 	(*item) -> item_order = -1;                        
 	(*item) -> item_order_total = -1;              
 	(*item) -> item_size = -1;        
+	strcpy((*item) -> item_name, "item");
 }
 
 void mft_fragment_init() {
@@ -38,4 +39,9 @@ void mft_fragment_init() {
 void print_mft(MFT *mft) {
 	printf("\nMFT:\n----------------\n");
 	printf("Size: %d B (10%% of disk space)\n", mft -> size);
+}
+
+MFT_ITEM *find_mft_item(MFT *mft, char *tok) {
+
+	return mft -> items[0];
 }

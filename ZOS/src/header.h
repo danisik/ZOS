@@ -107,6 +107,7 @@ void mft_init(MFT **mft);
 void mft_item_init();
 void mft_fragment_init();
 void print_mft(MFT *mft);
+MFT_ITEM *find_mft_item(MFT *mft, char *tok);
 
 //bitmap.c
 void bitmap_init(BITMAP **bitmap, int32_t cluster_count);

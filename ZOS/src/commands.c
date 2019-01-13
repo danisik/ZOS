@@ -205,14 +205,20 @@ void mft_item_info(VFS *vfs, char *tok) {
 		return;
 	}
 
-	/*
-	10) Vypíše informace o souboru/adresáři s1/a1 (v jakých fragmentech/clusterech se nachází),
-	uid, …
-	info a1/s1
-	Možný výsledek:
-	NAME – UID – SIZE - FRAGMENTY - CLUSTERY
-	FILE NOT FOUND (není zdroj)
-	*/
+
+	MFT_ITEM *item = find_mft_item(vfs -> mft, tok);
+
+	if (item == NULL) {
+		printf("FILE NOT FOUND\n");
+		return;
+	}
+
+	printf("NAME: %s\n", item -> item_name);
+	printf("UID: %d\n", item -> uid);
+	printf("SIZE: %d\n", item -> item_size);
+	printf("FRAGMENTS: Location - %d; Count - %d\n", item -> fragments -> fragment_start_address, item -> fragments -> fragment_count);
+	int cluster_ID = (item -> fragments -> fragment_start_address - vfs -> boot_record -> data_start_address) / vfs -> boot_record -> cluster_size;
+	printf("CLUSTERS: ID - %d\n", cluster_ID);
 }
 
 void hd_to_pseudo(VFS **vfs, char *tok) {
@@ -316,21 +322,21 @@ void full_info(VFS *vfs) {
 
 void commands_help() {
 	printf("Commands:\n");
-	printf("%s\n", COPY_FILE);
-	printf("%s\n", MOVE_FILE);
-	printf("%s\n", REMOVE_FILE);
-	printf("%s\n", MAKE_DIRECTORY);
-	printf("%s\n", REMOVE_EMPTY_DIRECTORY);
-	printf("%s\n", PRINT_DIRECTORY);
-	printf("%s\n", PRINT_FILE);
-	printf("%s\n", MOVE_TO_DIRECTORY);
-	printf("%s\n", ACTUAL_DIRECTORY);
-	printf("%s\n", MFT_ITEM_INFO);
-	printf("%s\n", HD_TO_PSEUDO);
-	printf("%s\n", PSEUDO_TO_HD);
-	printf("%s\n", LOAD_COMMANDS);
-	printf("%s\n", FILE_FORMATTING);
-	printf("%s\n", DEFRAG);
-	printf("%s\n", FULL_INFO);
-	printf("%s\n", HELP);
+	printf("%s - Copy file (%s s1 s2)\n", COPY_FILE, COPY_FILE);
+	printf("%s - Move file (%s s1 s2)\n", MOVE_FILE, MOVE_FILE);
+	printf("%s - Remove file (%s s1)\n", REMOVE_FILE, REMOVE_FILE);
+	printf("%s - Make directory (%s s1)\n", MAKE_DIRECTORY, MAKE_DIRECTORY);
+	printf("%s - Remove empty directory (%s s1)\n", REMOVE_EMPTY_DIRECTORY, REMOVE_EMPTY_DIRECTORY);
+	printf("%s - Print directory (%s s1)\n", PRINT_DIRECTORY, PRINT_DIRECTORY);
+	printf("%s - Print file (%s s1)\n", PRINT_FILE, PRINT_FILE);
+	printf("%s - Move to directory (%s s1)\n", MOVE_TO_DIRECTORY, MOVE_TO_DIRECTORY);
+	printf("%s - Actual directory (%s)\n", ACTUAL_DIRECTORY, ACTUAL_DIRECTORY);
+	printf("%s - MFT Item info (%s s1)\n", MFT_ITEM_INFO, MFT_ITEM_INFO);
+	printf("%s - Copy file from HD to pseudoNTFS (%s s1 s2)\n", HD_TO_PSEUDO, HD_TO_PSEUDO);
+	printf("%s - Copy file from pseudoNTFS to HD (%s s1 s2)\n", PSEUDO_TO_HD, PSEUDO_TO_HD);
+	printf("%s - Load commands from file (%s s1)\n", LOAD_COMMANDS, LOAD_COMMANDS);
+	printf("%s - Formatting file (%s 600MB)\n", FILE_FORMATTING, FILE_FORMATTING);
+	printf("%s - Defragmentation (%s)\n", DEFRAG, DEFRAG);
+	printf("%s - Info about pseudoNTFS (%s)\n", FULL_INFO, DEFRAG);
+	printf("%s - Available commands (%s)\n", HELP, HELP);
 }
