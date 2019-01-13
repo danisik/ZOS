@@ -38,7 +38,6 @@ void vfs_init(VFS **vfs, char *filename) {
 void path_init(VFS **vfs) {
 	(*vfs) -> actual_path = calloc(1, sizeof(PATH));
 	(*vfs) -> actual_path -> path = calloc(PATH_MAX, sizeof(char));
-	strcat((*vfs) -> actual_path -> path, "~");
 }
 
 void create_vfs_file(VFS **vfs) {
@@ -51,16 +50,14 @@ void create_vfs_file(VFS **vfs) {
 
 		//TODO načíst hodnoty z už vytvořeného 
         	fwrite((*vfs) -> boot_record, sizeof(BOOT_RECORD), 1, file);
-	        fwrite((*vfs) -> mft -> items, sizeof(MFT_ITEM), (size_t) (*vfs) -> mft -> size, file);
-	        fwrite((*vfs) -> bitmap -> data, sizeof(unsigned char), (size_t) (*vfs) -> bitmap -> length, file);
+		fseek(file, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
 
-	        char zeros[(*vfs) -> boot_record -> cluster_size];
-	        memset(zeros, 0, (size_t) (*vfs) -> boot_record -> cluster_size);
-	
-		int i;
-	        for (i = 0; i < (*vfs) -> boot_record -> cluster_count; ++i) {
-	            fwrite(zeros, (size_t) (*vfs) -> boot_record -> cluster_size, 1, file);
-	        }
+	        fwrite((*vfs) -> mft, sizeof(MFT_ITEM), (size_t) (*vfs) -> mft -> size, file);
+		fseek(file, (*vfs) -> boot_record -> bitmap_start_address, SEEK_SET);
+
+	        fwrite((*vfs) -> bitmap, sizeof(unsigned char), (size_t) (*vfs) -> bitmap -> length, file);
+		fseek(file, (*vfs) -> boot_record -> data_start_address, SEEK_SET);
+
 		fclose(file);
 		(*vfs) -> FILE = fopen((*vfs) -> filename, "r+b");	
 	}

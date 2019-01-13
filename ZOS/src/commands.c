@@ -5,6 +5,24 @@
 
 void copy_file(VFS **vfs, char *tok) {
 
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("SOURCE NOT DEFINED\n");
+		return;
+	}
+
+
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("DESTINATION NOT DEFINED\n");
+		return;
+	}
+
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
+	char destination[MAX_LENGTH_OF_COMMAND];
+	strcpy(destination, tok);
+
 	/*
 	1) Zkopíruje soubor s1 do umístění s2
 	cp s1 s2
@@ -16,6 +34,24 @@ void copy_file(VFS **vfs, char *tok) {
 }
 
 void move_file(VFS **vfs, char *tok) {
+
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("SOURCE NOT DEFINED\n");
+		return;
+	}
+
+
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("DESTINATION NOT DEFINED\n");
+		return;
+	}
+
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
+	char destination[MAX_LENGTH_OF_COMMAND];
+	strcpy(destination, tok);
 
 	/*
 	2) Přesune soubor s1 do umístění s2
@@ -29,6 +65,13 @@ void move_file(VFS **vfs, char *tok) {
 
 void remove_file(VFS **vfs, char *tok) {
 
+	tok = strtok(NULL, " ");
+
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("FILE NOT DEFINED\n");
+		return;
+	}
+
 	/*
 	3) Smaže soubor s1
 	rm s1
@@ -39,6 +82,13 @@ void remove_file(VFS **vfs, char *tok) {
 }
 
 void make_directory(VFS **vfs, char *tok) {
+
+	tok = strtok(NULL, " ");
+
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("NAME OF DIRECTORY NOT DEFINED\n");
+		return;
+	}
 
 	/*
 	4) Vytvoří adresář a1
@@ -52,6 +102,13 @@ void make_directory(VFS **vfs, char *tok) {
 
 void remove_empty_directory(VFS **vfs, char *tok) {
 
+	tok = strtok(NULL, " ");
+
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("NAME OF DIRECTORY NOT DEFINED\n");
+		return;
+	}
+
 	/*
 	5) Smaže prázdný adresář a1
 	rmdir a1
@@ -63,8 +120,10 @@ void remove_empty_directory(VFS **vfs, char *tok) {
 }
 
 void print_directory(VFS *vfs, char *tok) {
+
 	/*
 	6) Vypíše obsah adresáře a1
+	ls 
 	ls a1
 	Možný výsledek:
 	-FILE
@@ -74,6 +133,13 @@ void print_directory(VFS *vfs, char *tok) {
 }
 
 void print_file(VFS *vfs, char *tok) {
+
+	tok = strtok(NULL, " ");
+
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("FILENAME NOT DEFINED\n");
+		return;
+	}
 
 	/*
 	7) Vypíše obsah souboru s1
@@ -85,9 +151,36 @@ void print_file(VFS *vfs, char *tok) {
 }
 
 void move_to_directory(VFS **vfs, char *tok) {
+	if ((tok = strtok(NULL, " ")) != NULL) {
+		if (strlen(tok) > 1) {
+			if (strncmp(tok, "..", 2) == 0) {				
+				if (strlen((*vfs) -> actual_path -> path) > 1) {
+					go_to_parent_folder(vfs);
+				}
+			}
+			else {
+				//TODO kontrola zda adresar existuje		
+				set_path_to_root(vfs);	
+				if (tok[0] != 47) strcat((*vfs) -> actual_path -> path, "/");
+				if (tok[strlen(tok) - 2] == 47) strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 2);
+				else strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 1);
+			}
+			return;
+		}
+		else {
+			printf("NAME OF DIRECTORY NOT DEFINED\n");
+			return;
+		}
+	}
+	else {
+		set_path_to_root(vfs);	
+		return;
+	}
+
 
 	/*
 	8) Změní aktuální cestu do adresáře a1
+	cd ..
 	cd a1
 	Možný výsledek:
 	OK
@@ -97,15 +190,20 @@ void move_to_directory(VFS **vfs, char *tok) {
 
 void actual_directory(VFS *vfs) {
 	
-	/*
-	9) Vypíše aktuální cestu
-	pwd
-	Možný výsledek:
-	PATH
-	*/
+	char path[strlen(vfs -> actual_path -> path)];
+	if (strlen(vfs -> actual_path -> path) > 0) strcpy(path, vfs -> actual_path -> path);
+	else strcpy(path, "/");
+	printf("%s", path);
 }
 
 void mft_item_info(VFS *vfs, char *tok) {
+
+	tok = strtok(NULL, " ");
+
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("SOURCE NAME NOT DEFINED\n");
+		return;
+	}
 
 	/*
 	10) Vypíše informace o souboru/adresáři s1/a1 (v jakých fragmentech/clusterech se nachází),
@@ -119,6 +217,24 @@ void mft_item_info(VFS *vfs, char *tok) {
 
 void hd_to_pseudo(VFS **vfs, char *tok) {
 
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("SOURCE NOT DEFINED\n");
+		return;
+	}
+
+
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("DESTINATION NOT DEFINED\n");
+		return;
+	}
+
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
+	char destination[MAX_LENGTH_OF_COMMAND];
+	strcpy(destination, tok);
+
 	/*
 	11) Nahraje soubor s1 z pevného disku do umístění s2 v pseudoNTFS
 	incp s1 s2
@@ -130,6 +246,24 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 }
 
 void pseudo_to_hd(VFS **vfs, char *tok) {
+
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("SOURCE NOT DEFINED\n");
+		return;
+	}
+
+
+	tok = strtok(NULL, " ");
+	if (tok == NULL || strlen(tok) == 0) {
+		printf("DESTINATION NOT DEFINED\n");
+		return;
+	}
+
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
+	char destination[MAX_LENGTH_OF_COMMAND];
+	strcpy(destination, tok);
 
 	/*
 	12) Nahraje soubor s1 z pseudoNTFS do umístění s2 na pevném disku

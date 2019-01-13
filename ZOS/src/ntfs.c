@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 	char *tok;
 
 	while(1) {
-		printf("\n%s$ ", vfs -> actual_path -> path);
+		printf("\n%s%s%s ", ROOT_CHAR, vfs -> actual_path -> path, SHELL_CHAR);
 		  	
 		if (is_used_file == 0) {
         	    fgets(command, MAX_LENGTH_OF_COMMAND, stdin);
@@ -69,10 +69,10 @@ int main(int argc, char *argv[]) {
 			print_file(vfs, tok); //not implemented
 		}
 		else if (strncmp(tok, MOVE_TO_DIRECTORY, strlen(MOVE_TO_DIRECTORY)) == 0) {
-			move_to_directory(&vfs, tok); //not implemented
+			move_to_directory(&vfs, tok); //need to check if writed directory is ok
 		}
 		else if (strncmp(tok, ACTUAL_DIRECTORY, strlen(ACTUAL_DIRECTORY)) == 0) {
-			actual_directory(vfs); //not implemented
+			actual_directory(vfs);
 		}
 		else if (strncmp(tok, MFT_ITEM_INFO, strlen(MFT_ITEM_INFO)) == 0) {
 			mft_item_info(vfs, tok); //not implemented

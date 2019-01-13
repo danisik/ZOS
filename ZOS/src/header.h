@@ -1,5 +1,5 @@
 #define UID_ITEM_FREE 0
-#define MFT_FRAGMENTS_COUNT 1
+#define MFT_FRAGMENTS_COUNT 32
 #define VFS_FILENAME_LENGTH 12
 #define DISK_SIZE 10240 //10 KB 
 //#define DISK SIZE 10485760 //10 MB
@@ -7,7 +7,8 @@
 #define MFT_SIZE_RATIO 0.1
 
 #define MAX_LENGTH_OF_COMMAND 100
-#define SHELL_CHAR $
+#define SHELL_CHAR "$"
+#define ROOT_CHAR "~"
 
 #define COPY_FILE "cp"
 #define MOVE_FILE "mv"
@@ -129,4 +130,9 @@ void file_formatting(VFS **vfs, char *tok);
 void defrag();
 void full_info(VFS *vfs);
 void commands_help();
+
+//functions.c
+void set_path_to_root(VFS **vfs);
+void go_to_parent_folder(VFS **vfs);
+int array_length_strtok(char *path);
 
