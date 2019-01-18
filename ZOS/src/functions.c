@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <linux/limits.h>
 #include "header.h"
+#include <ctype.h>
+#include <math.h>
 
 void set_path_to_root(VFS **vfs) {
 	memset((*vfs) -> actual_path -> path, 0, PATH_MAX);
@@ -36,4 +38,68 @@ int array_length_strtok(char *path) {
 		else i++;
 	}
 	return i;
+}
+
+int index_of_last_digit(char *size) {
+	char str[strlen(size)];
+	strcpy(str, size);
+	
+	int index = 0;
+	while(isdigit(str[index])) {
+		index++;
+	}
+
+	return index;
+}
+
+int get_multiple(char *multiple, int size) {
+	int multiple_number = 1;
+	char mult[size];
+	strncpy(mult, multiple, size);
+
+	switch(size) {
+		case 2:
+			switch(mult[0]) {
+				case 'K':
+					multiple_number = 1000;
+					break;
+				case 'M':
+					multiple_number = 1000 * 1000;
+					break;
+				case 'G':
+					multiple_number = 1000 * 1000 * 1000;
+					break;
+				default:
+					printf("Wrong multiple, using only B\n");
+					break;
+			}
+			break;
+		default:
+			printf("Wrong multiple, using only B\n");
+			break;
+	}
+
+	return multiple_number;
+}
+
+int my_atoi(const char* snum)
+{
+    int idx, strIdx = 0, accum = 0, numIsNeg = 0;
+    const unsigned int NUMLEN = (int)strlen(snum);
+
+    if(snum[0] == 0x2d)
+        numIsNeg = 1;
+
+    for(idx = NUMLEN - 1; idx >= 0; idx--)
+    {
+        if(snum[strIdx] >= 0x30 && snum[strIdx] <= 0x39)
+            accum += (snum[strIdx] - 0x30) * pow(10, idx);
+
+        strIdx++;
+    }
+
+    if(!numIsNeg)
+        return accum;
+    else
+        return accum * -1;
 }

@@ -12,18 +12,26 @@ char filename[100] = "ntfs.dat";
 
 int main(int argc, char *argv[]) {
 	
-	printf("WELCOME IN PSEUDO-NTFS (iNTFS)");
 	/*
 	if (argc == 2) {
-		vfs_init(&vfs, argv[1]);
+		if (strcmp(argv[1], "-help") == 0) {
+			help();
+			return 0;
+		}
+		else vfs_init(&vfs, argv[1]);		
 	}
 	else {
 		help();
+		return 0;
 	}
 	*/
 
-	vfs_init(&vfs, filename);
+	printf("WELCOME IN PSEUDO-NTFS (iNTFS)");
+	vfs_init(&vfs, filename, DISK_SIZE);
 
+	vfs -> bitmap -> data[0] = 1;
+	vfs -> bitmap -> data[20] = 1;
+	
 	char command[MAX_LENGTH_OF_COMMAND];
 	char *tok;
 
@@ -43,7 +51,7 @@ int main(int argc, char *argv[]) {
 
 	            	printf("%s", command);
         	}
-		tok = strtok(command, " ");
+		tok = strtok(command, SPLIT_ARGS_CHAR);
 
 	
 
@@ -87,7 +95,7 @@ int main(int argc, char *argv[]) {
 			is_used_file = load_commands(&file_with_commands, tok); 
 		}
 		else if (strncmp(tok, FILE_FORMATTING, strlen(FILE_FORMATTING)) == 0) {
-			file_formatting(&vfs, tok); //not implemented
+			file_formatting(&vfs, tok);
 		}
 		else if (strncmp(tok, DEFRAG, strlen(DEFRAG)) == 0) {
 			defrag(); //not implemented
@@ -98,10 +106,14 @@ int main(int argc, char *argv[]) {
 		else if (strncmp(tok, FULL_INFO, strlen(FULL_INFO)) == 0) {
 			full_info(vfs);
 		}
+		else if (strncmp(tok, QUIT, strlen(QUIT)) == 0) {
+			break;
+		}
 		else {
 			printf("Unknown command\n");
 		}
 	}
+	printf("pseudoNTFS end\n");
 }
 
 void help() {

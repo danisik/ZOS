@@ -9,6 +9,7 @@
 #define MAX_LENGTH_OF_COMMAND 100
 #define SHELL_CHAR "$"
 #define ROOT_CHAR "~"
+#define SPLIT_ARGS_CHAR " "
 
 #define COPY_FILE "cp"
 #define MOVE_FILE "mv"
@@ -25,8 +26,9 @@
 #define LOAD_COMMANDS "load"
 #define FILE_FORMATTING "format"
 #define DEFRAG "defrag"
-#define HELP "help"
 #define FULL_INFO "finfo"
+#define QUIT "quit"
+#define HELP "help"
 
 
 typedef struct the_bitmap BITMAP;
@@ -49,6 +51,7 @@ struct the_mft_fragment {
 
 struct the_mft_item {
 	int32_t uid;                                        //UID polozky, pokud UID = UID_ITEM_FREE, je polozka volna
+	int32_t parentID;
 	int isDirectory;                                    //soubor, nebo adresar (0 soubor, 1 adresar)
 	int8_t item_order;                                  //poradi v MFT pri vice souborech, jinak 1
 	int8_t item_order_total;                            //celkovy pocet polozek v MFT, jinak 1
@@ -93,7 +96,7 @@ struct the_vfs {
 void help();
 
 //vfs.c
-void vfs_init(VFS **vfs, char *filename);
+void vfs_init(VFS **vfs, char *filename, size_t disk_size);
 void path_init(VFS **vfs);
 void print_vfs(VFS *vfs);
 void create_vfs_file(VFS **vfs);
@@ -136,4 +139,6 @@ void commands_help();
 void set_path_to_root(VFS **vfs);
 void go_to_parent_folder(VFS **vfs);
 int array_length_strtok(char *path);
-
+int index_of_last_digit(char *size);
+int get_multiple(char *multiple, int size);
+int my_atoi(const char* snum);

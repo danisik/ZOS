@@ -7,11 +7,21 @@
 #define SIGNATURE "Danisik"
 #define DESCRIPTOR "pseudoNTFS"
 
-void vfs_init(VFS **vfs, char *filename) {
+void vfs_init(VFS **vfs, char *filename, size_t disk_size) {
+
 	(*vfs) = calloc(1, sizeof(VFS));
+
+	(*vfs) -> filename = calloc(VFS_FILENAME_LENGTH, sizeof(char));
+
+	if (strlen(filename) > 12) {
+		strncpy((*vfs) -> filename, filename, 11);
+	}
+	else strcpy((*vfs) -> filename, filename);
 	
+	//TODO kontrola zda soubor už existuje, pokud ano, naplnit struktury v programu
+
 	BOOT_RECORD *boot_record;
-	boot_record_init(&boot_record, SIGNATURE, DESCRIPTOR, DISK_SIZE, CLUSTER_SIZE);
+	boot_record_init(&boot_record, SIGNATURE, DESCRIPTOR, disk_size, CLUSTER_SIZE);
 	(*vfs) -> boot_record = boot_record;
 
 	MFT *mft;
@@ -21,15 +31,6 @@ void vfs_init(VFS **vfs, char *filename) {
 	BITMAP *bitmap;
 	bitmap_init(&bitmap, (*vfs) -> boot_record -> cluster_count);
 	(*vfs) -> bitmap = bitmap;
-	
-	(*vfs) -> filename = calloc(VFS_FILENAME_LENGTH, sizeof(char));
-	if (strlen(filename) > 12) {
-		strncpy((*vfs) -> filename, filename, 11);
-	}
-	else strcpy((*vfs) -> filename, filename);
-
-	//TODO
-	(*vfs) -> FILE = NULL;	
 
 	path_init(vfs);
 	create_vfs_file(vfs);
@@ -47,8 +48,6 @@ void create_vfs_file(VFS **vfs) {
 		return;
 	} 
 	else {		
-
-		//TODO načíst hodnoty z už vytvořeného 
         	fwrite((*vfs) -> boot_record, sizeof(BOOT_RECORD), 1, file);
 		fseek(file, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
 

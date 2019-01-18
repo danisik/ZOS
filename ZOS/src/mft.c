@@ -14,6 +14,7 @@ void mft_init(MFT **mft) {
 		MFT_ITEM *item;
 		mft_item_init(&item);
 		
+		if (i == 0); strcpy(item -> item_name, "ROOT");
 		(*mft) -> items[i] = item; 
 	}
 
@@ -25,11 +26,11 @@ void mft_init(MFT **mft) {
 void mft_item_init(MFT_ITEM **item) {
 	(*item) = calloc(1, sizeof(MFT_ITEM));
 	(*item) -> uid = UID_ITEM_FREE;
+	(*item) -> parentID = UID_ITEM_FREE;
 	(*item) -> isDirectory = -1;                           
 	(*item) -> item_order = -1;                        
 	(*item) -> item_order_total = -1;              
 	(*item) -> item_size = -1;        
-	strcpy((*item) -> item_name, "item");
 }
 
 void mft_fragment_init() {

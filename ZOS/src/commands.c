@@ -215,6 +215,7 @@ void mft_item_info(VFS *vfs, char *tok) {
 
 	printf("NAME: %s\n", item -> item_name);
 	printf("UID: %d\n", item -> uid);
+	printf("PUID: %d\n", item -> parentID);
 	printf("SIZE: %d\n", item -> item_size);
 	printf("FRAGMENTS: Location - %d; Count - %d\n", item -> fragments -> fragment_start_address, item -> fragments -> fragment_count);
 	int cluster_ID = (item -> fragments -> fragment_start_address - vfs -> boot_record -> data_start_address) / vfs -> boot_record -> cluster_size;
@@ -297,15 +298,30 @@ int load_commands(FILE **file_with_commands, char *tok) {
 
 void file_formatting(VFS **vfs, char *tok) {
 
-	/*
-	14) Příkaz provede formát souboru, který byl zadán jako parametr při spuštení programu na
-	souborový systém dané velikosti. Pokud už soubor nějaká data obsahoval, budou přemazána.
-	Pokud soubor neexistoval, bude vytvořen.
-	format 600MB
-	Možný výsledek:
-	OK
-	CANNOT CREATE FILE
-	*/
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+	int last_digit_index = index_of_last_digit(tok);
+	
+	char number[last_digit_index + 1];
+	memset(number, 0, last_digit_index + 1);
+	strncpy(number, tok, last_digit_index);
+
+	int multiple_size = (strlen(tok) - last_digit_index) - 1;
+	
+	char multiple[multiple_size];
+
+	int i = 0;
+	int j = 0;
+
+	for (i = last_digit_index; i < strlen(tok) - 1; i++) {
+		multiple[j] = tok[i];
+		j++;
+	}
+
+	int multiple_number = get_multiple(multiple, multiple_size);
+
+	int disk_size = my_atoi(number) * multiple_number;
+	vfs_init(vfs, (*vfs) -> filename, disk_size);
+	printf("Data file with name %s was formated. Disk size = %d\n", (*vfs) -> filename, disk_size);
 }
 
 void defrag() {
@@ -335,8 +351,9 @@ void commands_help() {
 	printf("%s - Copy file from HD to pseudoNTFS (%s s1 s2)\n", HD_TO_PSEUDO, HD_TO_PSEUDO);
 	printf("%s - Copy file from pseudoNTFS to HD (%s s1 s2)\n", PSEUDO_TO_HD, PSEUDO_TO_HD);
 	printf("%s - Load commands from file (%s s1)\n", LOAD_COMMANDS, LOAD_COMMANDS);
-	printf("%s - Formatting file (%s 600MB)\n", FILE_FORMATTING, FILE_FORMATTING);
+	printf("%s - Formatting file (%s 10MB)\n", FILE_FORMATTING, FILE_FORMATTING);
 	printf("%s - Defragmentation (%s)\n", DEFRAG, DEFRAG);
-	printf("%s - Info about pseudoNTFS (%s)\n", FULL_INFO, DEFRAG);
+	printf("%s - Info about pseudoNTFS (%s)\n", FULL_INFO, FULL_INFO);
+	printf("%s - Quit pseudoNTFS (%s)\n", QUIT, QUIT);
 	printf("%s - Available commands (%s)\n", HELP, HELP);
 }

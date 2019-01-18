@@ -1,7 +1,7 @@
 CC = gcc
 BIN = ntfs
 OBJ = $(wildcard src/*.c)
-FLAGS = -lpthread -Wall -std=c99 -D_GNU_SOURCE	
+FLAGS = -lpthread -Wall -std=c99 -D_GNU_SOURCE -lm	
 
 all: $(BIN) clean
 
