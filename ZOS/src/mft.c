@@ -6,31 +6,26 @@
 
 void mft_init(MFT **mft) {
 	(*mft) = calloc(1, sizeof(MFT));
-	(*mft) -> size = DISK_SIZE * MFT_SIZE_RATIO;
+	(*mft) -> size = 0;
 	(*mft) -> items = calloc((*mft) -> size, sizeof(MFT_ITEM));
 
-	int i;
-	for (i = 0; i < (*mft) -> size; i++) {
-		MFT_ITEM *item;
-		mft_item_init(&item);
-		
-		if (i == 0); strcpy(item -> item_name, "ROOT");
-		(*mft) -> items[i] = item; 
-	}
+	mft_item_init(mft, "root", 1, 1);
 
 	//TODO
 	//MFT_FRAGMENT fragments[MFT_FRAGMENTS_COUNT];
 	//mft_fragment_init();
 }
 
-void mft_item_init(MFT_ITEM **item) {
-	(*item) = calloc(1, sizeof(MFT_ITEM));
-	(*item) -> uid = UID_ITEM_FREE;
-	(*item) -> parentID = UID_ITEM_FREE;
-	(*item) -> isDirectory = -1;                           
-	(*item) -> item_order = -1;                        
-	(*item) -> item_order_total = -1;              
-	(*item) -> item_size = -1;        
+void mft_item_init(MFT **mft, char *name, int isDirectory, int item_size) {
+	(*mft) -> items[(*mft) -> size] = calloc(1, sizeof(MFT_ITEM));
+	(*mft) -> items[(*mft) -> size] -> uid = UID_ITEM_FREE;
+	(*mft) -> items[(*mft) -> size] -> parentID = UID_ITEM_FREE;
+	(*mft) -> items[(*mft) -> size] -> isDirectory = isDirectory;                           
+	(*mft) -> items[(*mft) -> size] -> item_order = 1;                        
+	(*mft) -> items[(*mft) -> size] -> item_order_total = 1;              
+	(*mft) -> items[(*mft) -> size] -> item_size = item_size;        
+	strcpy((*mft) -> items[(*mft) -> size] -> item_name, name);
+	(*mft) -> size++;
 }
 
 void mft_fragment_init() {
@@ -44,5 +39,12 @@ void print_mft(MFT *mft) {
 
 MFT_ITEM *find_mft_item(MFT *mft, char *tok) {
 
-	return mft -> items[0];
+	int i;
+	for (i = 0; i < mft -> size; i++) {
+		if (strncmp(tok, mft -> items[i] -> item_name, strlen(mft -> items[i] -> item_name)) == 0) {
+			return mft -> items[i];
+		}			
+	}
+
+	return NULL;
 }

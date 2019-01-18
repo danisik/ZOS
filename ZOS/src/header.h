@@ -107,7 +107,7 @@ void print_boot_record(BOOT_RECORD *boot_record);
 
 //mft.c
 void mft_init(MFT **mft);
-void mft_item_init();
+void mft_item_init(MFT **mft, char *name, int isDirectory, int item_size);
 void mft_fragment_init();
 void print_mft(MFT *mft);
 MFT_ITEM *find_mft_item(MFT *mft, char *tok);
