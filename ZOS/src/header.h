@@ -1,5 +1,5 @@
 #define UID_ITEM_FREE 0
-#define MFT_FRAGMENTS_COUNT 32
+#define MFT_FRAGMENTS_COUNT 1
 #define VFS_FILENAME_LENGTH 12
 #define DISK_SIZE 10240 //10 KB 
 //#define DISK SIZE 10485760 //10 MB
@@ -103,17 +103,20 @@ void create_vfs_file(VFS **vfs);
 
 //boot_record.c
 void boot_record_init(BOOT_RECORD **boot_record, char *signature, char *volume_descriptor, int32_t disk_size, int32_t cluster_size);
+void fread_boot_record(VFS **vfs, FILE *file);
 void print_boot_record(BOOT_RECORD *boot_record);
 
 //mft.c
 void mft_init(MFT **mft);
 void mft_item_init(MFT **mft, char *name, int isDirectory, int item_size);
 void mft_fragment_init();
-void print_mft(MFT *mft);
+void fread_mft(VFS **vfs, FILE *file);
 MFT_ITEM *find_mft_item(MFT *mft, char *tok);
+void print_mft(MFT *mft);
 
 //bitmap.c
 void bitmap_init(BITMAP **bitmap, int32_t cluster_count);
+void fread_bitmap(VFS **vfs, FILE *file);
 void print_bitmap(BITMAP *bitmap);
 
 //commands.c

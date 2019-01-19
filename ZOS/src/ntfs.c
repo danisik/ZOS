@@ -26,11 +26,8 @@ int main(int argc, char *argv[]) {
 	}
 	*/
 
-	printf("WELCOME IN PSEUDO-NTFS (iNTFS)");
+	printf("WELCOME IN PSEUDO-NTFS (iNTFS)\n\n");
 	vfs_init(&vfs, filename, DISK_SIZE);
-
-	vfs -> bitmap -> data[0] = 1;
-	vfs -> bitmap -> data[20] = 1;
 	
 	char command[MAX_LENGTH_OF_COMMAND];
 	char *tok;
@@ -52,7 +49,6 @@ int main(int argc, char *argv[]) {
 	            	printf("%s", command);
         	}
 		tok = strtok(command, SPLIT_ARGS_CHAR);
-
 	
 
 		if (strncmp(tok, COPY_FILE, strlen(COPY_FILE)) == 0) {

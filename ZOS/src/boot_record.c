@@ -21,10 +21,15 @@ void boot_record_init(BOOT_RECORD **boot_record, char *signature, char *volume_d
 	(*boot_record) -> cluster_count = disk_size / cluster_size;
 
 	(*boot_record) -> mft_start_address = sizeof(BOOT_RECORD);
-	(*boot_record) -> bitmap_start_address = (*boot_record) -> mft_start_address + sizeof(MFT) + (DISK_SIZE * MFT_SIZE_RATIO);
+	(*boot_record) -> bitmap_start_address = (*boot_record) -> mft_start_address + sizeof(MFT) + ((*boot_record) -> disk_size * MFT_SIZE_RATIO);
 	(*boot_record) -> data_start_address = (*boot_record) -> bitmap_start_address + sizeof(BITMAP) + ((*boot_record) -> cluster_count * sizeof(unsigned char));
 
 	(*boot_record) -> mft_max_fragment_count = MFT_FRAGMENTS_COUNT; 
+}
+
+void fread_boot_record(VFS **vfs, FILE *file) {
+	(*vfs) -> boot_record = calloc(1, sizeof(BOOT_RECORD));
+	fread((*vfs) -> boot_record, sizeof(BOOT_RECORD), 1, file);
 }
 
 void print_boot_record(BOOT_RECORD *boot_record) {
