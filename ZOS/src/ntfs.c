@@ -67,13 +67,13 @@ int main(int argc, char *argv[]) {
 			remove_empty_directory(&vfs, tok); //not implemented
 		}
 		else if (strncmp(tok, PRINT_DIRECTORY, strlen(PRINT_DIRECTORY)) == 0) {
-			print_directory(vfs, tok); //not implemented
+			print_directory(vfs, tok);
 		}
 		else if (strncmp(tok, PRINT_FILE, strlen(PRINT_FILE)) == 0) {
 			print_file(vfs, tok); //not implemented
 		}
 		else if (strncmp(tok, MOVE_TO_DIRECTORY, strlen(MOVE_TO_DIRECTORY)) == 0) {
-			move_to_directory(&vfs, tok); //need to check if writed directory is ok
+			move_to_directory(&vfs, tok);
 		}
 		else if (strncmp(tok, ACTUAL_DIRECTORY, strlen(ACTUAL_DIRECTORY)) == 0) {
 			actual_directory(vfs);

@@ -4,36 +4,46 @@
 #include "header.h"
 
 
-void mft_init(MFT **mft) {
-	(*mft) = calloc(1, sizeof(MFT));
-	(*mft) -> size = 0;
-	(*mft) -> items = calloc((*mft) -> size, sizeof(MFT_ITEM));
+void mft_init(VFS **vfs) {
+	(*vfs) -> mft = calloc(1, sizeof(MFT));
+	(*vfs) -> mft -> size = 0;
+	(*vfs) -> mft -> items = calloc((*vfs) -> mft -> size, sizeof(MFT_ITEM));
 
-	mft_item_init(mft, "root", 1, 1);
+	mft_item_init(vfs, (*vfs) -> mft -> size, -1, ROOT_NAME, 1, DIRECTORY_SIZE);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "test", 1, DIRECTORY_SIZE);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "tete", 1, DIRECTORY_SIZE);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 1, "test2", 1, DIRECTORY_SIZE);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "tete2", 1, DIRECTORY_SIZE);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 3, "test3", 1, DIRECTORY_SIZE);
+
 }
 
-void mft_item_init(MFT **mft, char *name, int isDirectory, int item_size) {
+void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size) {
 
-	//kontrola jestli můžu stále vytvářem nové itemy
+	if (bitmap_contains_free_cluster((*vfs) -> bitmap) == 1) {
+		printf("Out of memory, cannot create new files\n");
+		return;
+	} 
 
-	(*mft) -> items[(*mft) -> size] = calloc(1, sizeof(MFT_ITEM));
-	(*mft) -> items[(*mft) -> size] -> uid = UID_ITEM_FREE;
-	(*mft) -> items[(*mft) -> size] -> parentID = UID_ITEM_FREE;
-	(*mft) -> items[(*mft) -> size] -> isDirectory = isDirectory;                           
-	(*mft) -> items[(*mft) -> size] -> item_order = 1;                        
-	(*mft) -> items[(*mft) -> size] -> item_order_total = 1;              
-	(*mft) -> items[(*mft) -> size] -> item_size = item_size;        
-	strcpy((*mft) -> items[(*mft) -> size] -> item_name, name);
-	
-	//TODO
-	//((*mft) -> items[(*mft) -> size] -> fragments[MFT_FRAGMENTS_COUNT];
-	//mft_fragment_init();
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] = calloc(1, sizeof(MFT_ITEM));
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> uid = uid;
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> parentID = parentID;
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> isDirectory = isDirectory;                           
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_order = 1;                        
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_order_total = 1;              
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_size = item_size;        
+	strcpy((*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_name, name);
 
-	(*mft) -> size++;
+	mft_fragment_init(vfs, &((*vfs) -> mft -> items[(*vfs) -> mft -> size]));
+
+	(*vfs) -> mft -> size++;
 }
 
-void mft_fragment_init() {
-	//najít volné clustery a zablokovat je
+void mft_fragment_init(VFS **vfs, MFT_ITEM **item) {
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments -> fragment_start_address = (*vfs) -> boot_record -> mft_start_address + ((*vfs) -> mft -> size * sizeof(MFT_ITEM));
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments -> fragment_count = 1;   
+
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments -> cluster_ID = find_free_cluster(&(*vfs) -> bitmap);
 }
 
 void fread_mft(VFS **vfs, FILE *file) {
@@ -41,11 +51,29 @@ void fread_mft(VFS **vfs, FILE *file) {
 	fseek(file, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
 }
 
-MFT_ITEM *find_mft_item(MFT *mft, char *tok) {
+MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok) {
+
+	int a = 0;
+	while(tok[a] != '\n' && tok[a] != '\0' && tok[a] != 47) {
+		a++;
+	}
+	char compare[a];
+	strncpy(compare, tok, a);
 
 	int i;
 	for (i = 0; i < mft -> size; i++) {
-		if (strncmp(tok, mft -> items[i] -> item_name, strlen(mft -> items[i] -> item_name)) == 0) {
+		if (strcmp(compare, mft -> items[i] -> item_name) == 0) {
+			return mft -> items[i];
+		}			
+	}
+
+	return NULL;
+}
+
+MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid) {
+	int i;
+	for (i = 0; i < mft -> size; i++) {
+		if (mft -> items[i] -> uid == uid) {
 			return mft -> items[i];
 		}			
 	}
@@ -55,11 +83,11 @@ MFT_ITEM *find_mft_item(MFT *mft, char *tok) {
 
 void print_mft(MFT *mft) {
 	printf("\nMFT:\n----------------\n");
-	printf("Items count: %d \n", mft -> size);
+	printf("Items count: %d (with root)\n", mft -> size);
 	printf("Size: %d \n", 0);
 	printf("\nItems (+ directory, - file):\n");
 	int i;
-	for (i = 0; i < mft -> size; i++) {
+	for (i = 1; i < mft -> size; i++) {
 		if (mft -> items[i] -> isDirectory == 1) printf("+");
 		else printf("-");
 		printf("%s\n", mft -> items[i] -> item_name);

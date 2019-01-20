@@ -28,13 +28,11 @@ void vfs_init(VFS **vfs, char *filename, size_t disk_size) {
 		boot_record_init(&boot_record, SIGNATURE, DESCRIPTOR, disk_size, CLUSTER_SIZE);
 		(*vfs) -> boot_record = boot_record;
 
-		MFT *mft;
-		mft_init(&mft);
-		(*vfs) -> mft = mft;
-
 		BITMAP *bitmap;
 		bitmap_init(&bitmap, (*vfs) -> boot_record -> cluster_count);
 		(*vfs) -> bitmap = bitmap;
+
+		mft_init(vfs);
 
 		create_vfs_file(vfs);
 	/*}

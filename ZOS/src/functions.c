@@ -82,8 +82,85 @@ int get_multiple(char *multiple, int size) {
 	return multiple_number;
 }
 
-int my_atoi(const char* snum)
-{
+int bitmap_contains_free_cluster(BITMAP *bitmap) {
+	int i;
+	for (i = 0; i < bitmap -> length; i++) {
+		if (bitmap -> data[i] == 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+int find_free_cluster(BITMAP **bitmap) {
+	int i;
+	for (i = 0; i < (*bitmap) -> length; i++) {
+		if ((*bitmap) -> data[i] == 0) {
+			(*bitmap) -> data[i] = 1;
+			//TODO fseek set value of this cluster to 1 if is free
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+int find_folder_id(MFT *mft, char *path) {
+	char actual_path[strlen(path)];
+	strcpy(actual_path, path);	
+
+	int i;
+	int actual_parentID = 0; //id of root
+	int folder_ID = -1;
+	int exit = 0;
+	char *tok = strtok(actual_path, "/");
+	
+	int a = 0;
+	while(1) {
+		a = 0;
+		while(tok[a] != '\n' && tok[a] != '\0' && tok[a] != 47) {
+			a++;
+		}
+		char compare[a];
+		strncpy(compare, tok, a);
+		for (i = 0; i < mft -> size; i++) {
+			if (strcmp(compare, mft -> items[i] -> item_name) == 0) {
+				if (mft -> items[i] -> parentID == actual_parentID) {
+					if (mft -> items[i] -> isDirectory == 0) {
+						printf("%s is file, not folder!\n", tok);
+						exit = 1;							
+						break;
+					}
+					else {
+						folder_ID = mft -> items[i] -> uid;
+						actual_parentID = folder_ID;
+						break;
+					}
+				}
+			} 
+			folder_ID = -1;
+		}
+
+		if (exit == 1) break;
+		tok = strtok(NULL, "/");
+		if (tok == NULL) break;
+	}
+	return folder_ID;
+}
+
+void print_folder_content(MFT *mft, int parentID) {
+	int i;
+	for (i = 1; i < mft -> size; i++) {		
+		if (mft -> items[i] -> parentID == parentID) {
+			if (mft -> items[i] -> isDirectory == 1) printf("+"); 
+			else printf("-");
+
+			printf("%s\n", mft -> items[i] -> item_name);
+		}
+	}
+}
+
+int my_atoi(const char* snum) {
     int idx, strIdx = 0, accum = 0, numIsNeg = 0;
     const unsigned int NUMLEN = (int)strlen(snum);
 

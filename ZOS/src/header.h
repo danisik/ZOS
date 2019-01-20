@@ -5,11 +5,13 @@
 //#define DISK SIZE 10485760 //10 MB
 #define CLUSTER_SIZE 256
 #define MFT_SIZE_RATIO 0.1
+#define DIRECTORY_SIZE 1
 
 #define MAX_LENGTH_OF_COMMAND 100
 #define SHELL_CHAR "$"
 #define ROOT_CHAR "~"
 #define SPLIT_ARGS_CHAR " "
+#define ROOT_NAME "root"
 
 #define COPY_FILE "cp"
 #define MOVE_FILE "mv"
@@ -47,6 +49,7 @@ struct the_bitmap {
 struct the_mft_fragment {
 	int32_t fragment_start_address;     //start adresa
 	int32_t fragment_count;             //pocet clusteru ve fragmentu
+	int32_t cluster_ID;
 };
 
 struct the_mft_item {
@@ -107,11 +110,12 @@ void fread_boot_record(VFS **vfs, FILE *file);
 void print_boot_record(BOOT_RECORD *boot_record);
 
 //mft.c
-void mft_init(MFT **mft);
-void mft_item_init(MFT **mft, char *name, int isDirectory, int item_size);
-void mft_fragment_init();
+void mft_init(VFS **vfs);
+void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size);
+void mft_fragment_init(VFS **vfs, MFT_ITEM **item);
 void fread_mft(VFS **vfs, FILE *file);
-MFT_ITEM *find_mft_item(MFT *mft, char *tok);
+MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok);
+MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid);
 void print_mft(MFT *mft);
 
 //bitmap.c
@@ -144,4 +148,8 @@ void go_to_parent_folder(VFS **vfs);
 int array_length_strtok(char *path);
 int index_of_last_digit(char *size);
 int get_multiple(char *multiple, int size);
+int bitmap_contains_free_cluster(BITMAP *bitmap);
+int find_free_cluster(BITMAP **bitmap);
+int find_folder_id(MFT *mft, char *path);
+void print_folder_content(MFT *mft, int parentID);
 int my_atoi(const char* snum);

@@ -5,14 +5,14 @@
 
 void copy_file(VFS **vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
 	}
 
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
@@ -35,14 +35,14 @@ void copy_file(VFS **vfs, char *tok) {
 
 void move_file(VFS **vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
 	}
 
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
@@ -65,7 +65,7 @@ void move_file(VFS **vfs, char *tok) {
 
 void remove_file(VFS **vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("FILE NOT DEFINED\n");
@@ -83,13 +83,16 @@ void remove_file(VFS **vfs, char *tok) {
 
 void make_directory(VFS **vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("NAME OF DIRECTORY NOT DEFINED\n");
 		return;
 	}
 
+
+	//mft_item_init(vfs, (*vfs) -> mft -> size, int parentID, tok, 1, DIRECTORY_SIZE)
+		
 	/*
 	4) Vytvoří adresář a1
 	mkdir a1
@@ -102,7 +105,7 @@ void make_directory(VFS **vfs, char *tok) {
 
 void remove_empty_directory(VFS **vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("NAME OF DIRECTORY NOT DEFINED\n");
@@ -121,20 +124,40 @@ void remove_empty_directory(VFS **vfs, char *tok) {
 
 void print_directory(VFS *vfs, char *tok) {
 
-	/*
-	6) Vypíše obsah adresáře a1
-	ls 
-	ls a1
-	Možný výsledek:
-	-FILE
-	+DIRECTORY
-	PATH NOT FOUND (neexistující adresář)
-	*/
+	MFT_ITEM *item = NULL;
+	int folder_ID = -1;
+
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+	
+	if (tok == NULL || strlen(tok) == 0) {
+		if (strlen(vfs -> actual_path -> path) == 0) {
+			folder_ID = 0;
+			item = vfs -> mft -> items[0];
+		}
+		else {
+			folder_ID = find_folder_id(vfs -> mft, vfs -> actual_path -> path);
+			item = find_mft_item_by_uid(vfs -> mft, folder_ID);
+		}
+		
+		if (item != NULL) {
+			print_folder_content(vfs -> mft, folder_ID);
+		}
+		else printf("PATH NOT FOUND\n");
+	}
+	else {
+		folder_ID = find_folder_id(vfs -> mft, tok);		
+		item = find_mft_item_by_uid(vfs -> mft, folder_ID);
+
+		if (item != NULL) {
+			print_folder_content(vfs -> mft, folder_ID);
+		}
+		else printf("PATH NOT FOUND\n");
+	}
 }
 
 void print_file(VFS *vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("FILENAME NOT DEFINED\n");
@@ -151,7 +174,9 @@ void print_file(VFS *vfs, char *tok) {
 }
 
 void move_to_directory(VFS **vfs, char *tok) {
-	if ((tok = strtok(NULL, " ")) != NULL) {
+	MFT_ITEM *item = NULL;
+	int folder_ID = -1;
+	if ((tok = strtok(NULL, SPLIT_ARGS_CHAR)) != NULL) {
 		if (strlen(tok) > 1) {
 			if (strncmp(tok, "..", 2) == 0) {				
 				if (strlen((*vfs) -> actual_path -> path) > 1) {
@@ -159,11 +184,16 @@ void move_to_directory(VFS **vfs, char *tok) {
 				}
 			}
 			else {
-				//TODO kontrola zda adresar existuje		
-				set_path_to_root(vfs);	
-				if (tok[0] != 47) strcat((*vfs) -> actual_path -> path, "/");
-				if (tok[strlen(tok) - 2] == 47) strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 2);
-				else strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 1);
+				folder_ID = find_folder_id((*vfs) -> mft, tok);		
+				item = find_mft_item_by_uid((*vfs) -> mft, folder_ID);
+
+				if (item != NULL) {
+					set_path_to_root(vfs);	
+					if (tok[0] != 47) strcat((*vfs) -> actual_path -> path, "/");
+					if (tok[strlen(tok) - 2] == 47) strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 2);
+					else strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 1);
+				}
+				else printf("PATH NOT FOUND\n");	
 			}
 			return;
 		}
@@ -198,15 +228,14 @@ void actual_directory(VFS *vfs) {
 
 void mft_item_info(VFS *vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NAME NOT DEFINED\n");
 		return;
 	}
 
-
-	MFT_ITEM *item = find_mft_item(vfs -> mft, tok);
+	MFT_ITEM *item = find_mft_item_by_name(vfs -> mft, tok);
 
 	if (item == NULL) {
 		printf("FILE NOT FOUND\n");
@@ -218,20 +247,19 @@ void mft_item_info(VFS *vfs, char *tok) {
 	printf("PUID: %d\n", item -> parentID);
 	printf("SIZE: %d\n", item -> item_size);
 	printf("FRAGMENTS: Location - %d; Count - %d\n", item -> fragments -> fragment_start_address, item -> fragments -> fragment_count);
-	int cluster_ID = (item -> fragments -> fragment_start_address - vfs -> boot_record -> data_start_address) / vfs -> boot_record -> cluster_size;
-	printf("CLUSTERS: ID - %d\n", cluster_ID);
+	printf("CLUSTERS: ID - %d\n", item -> fragments -> cluster_ID);
 }
 
 void hd_to_pseudo(VFS **vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
 	}
 
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
@@ -254,14 +282,14 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 
 void pseudo_to_hd(VFS **vfs, char *tok) {
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
 	}
 
 
-	tok = strtok(NULL, " ");
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
