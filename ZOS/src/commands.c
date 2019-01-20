@@ -6,6 +6,7 @@
 void copy_file(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
@@ -13,6 +14,7 @@ void copy_file(VFS **vfs, char *tok) {
 
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
@@ -36,13 +38,14 @@ void copy_file(VFS **vfs, char *tok) {
 void move_file(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
 	}
 
-
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
@@ -112,6 +115,7 @@ void remove_empty_directory(VFS **vfs, char *tok) {
 		return;
 	}
 
+
 	/*
 	5) Smaže prázdný adresář a1
 	rmdir a1
@@ -144,12 +148,11 @@ void print_directory(VFS *vfs, char *tok) {
 		}
 		else printf("PATH NOT FOUND\n");
 	}
-	else {
-		folder_ID = find_folder_id(vfs -> mft, tok);		
-		item = find_mft_item_by_uid(vfs -> mft, folder_ID);
+	else {		
+		item = get_mft_item_from_path(vfs, tok);
 
 		if (item != NULL) {
-			print_folder_content(vfs -> mft, folder_ID);
+			print_folder_content(vfs -> mft, item -> uid);
 		}
 		else printf("PATH NOT FOUND\n");
 	}
@@ -175,23 +178,31 @@ void print_file(VFS *vfs, char *tok) {
 
 void move_to_directory(VFS **vfs, char *tok) {
 	MFT_ITEM *item = NULL;
-	int folder_ID = -1;
-	if ((tok = strtok(NULL, SPLIT_ARGS_CHAR)) != NULL) {
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
+	if (tok != NULL) {
 		if (strlen(tok) > 1) {
 			if (strncmp(tok, "..", 2) == 0) {				
 				if (strlen((*vfs) -> actual_path -> path) > 1) {
 					go_to_parent_folder(vfs);
 				}
 			}
-			else {
-				folder_ID = find_folder_id((*vfs) -> mft, tok);		
-				item = find_mft_item_by_uid((*vfs) -> mft, folder_ID);
+			else {				
+				if (strlen(tok) > 0 && tok[strlen(tok) - 1] == '\n') tok[strlen(tok) - 1] = '\0';
+				char temp_path[strlen((*vfs) -> actual_path -> path) + strlen(tok)];
+				strcpy(temp_path, (*vfs) -> actual_path -> path); 
+				
+				if (tok[0] != 47) strcat(temp_path, "/");
+				strcat(temp_path, tok);
 
+				int folder_ID = find_folder_id((*vfs) -> mft, temp_path);		
+				item = find_mft_item_by_uid((*vfs) -> mft, folder_ID);
+				
 				if (item != NULL) {
 					set_path_to_root(vfs);	
-					if (tok[0] != 47) strcat((*vfs) -> actual_path -> path, "/");
-					if (tok[strlen(tok) - 2] == 47) strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 2);
-					else strncat((*vfs) -> actual_path -> path, tok, strlen(tok) - 1);
+					if (tok[strlen(tok) - 1] == 47) strncat((*vfs) -> actual_path -> path, temp_path, strlen(temp_path) - 1);
+					else strncat((*vfs) -> actual_path -> path, temp_path, strlen(temp_path));
+									
 				}
 				else printf("PATH NOT FOUND\n");	
 			}
@@ -234,8 +245,8 @@ void mft_item_info(VFS *vfs, char *tok) {
 		printf("SOURCE NAME NOT DEFINED\n");
 		return;
 	}
-
-	MFT_ITEM *item = find_mft_item_by_name(vfs -> mft, tok);
+	
+	MFT_ITEM *item = get_mft_item_from_path(vfs, tok);
 
 	if (item == NULL) {
 		printf("FILE NOT FOUND\n");
@@ -253,6 +264,7 @@ void mft_item_info(VFS *vfs, char *tok) {
 void hd_to_pseudo(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
@@ -283,6 +295,7 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 void pseudo_to_hd(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
@@ -290,6 +303,7 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	if (tok == NULL || strlen(tok) == 0) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
@@ -327,6 +341,7 @@ int load_commands(FILE **file_with_commands, char *tok) {
 void file_formatting(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+
 	int last_digit_index = index_of_last_digit(tok);
 	
 	char number[last_digit_index + 1];

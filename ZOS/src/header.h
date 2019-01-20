@@ -116,6 +116,7 @@ void mft_fragment_init(VFS **vfs, MFT_ITEM **item);
 void fread_mft(VFS **vfs, FILE *file);
 MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok);
 MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid);
+MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok);
 void print_mft(MFT *mft);
 
 //bitmap.c

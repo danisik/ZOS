@@ -114,17 +114,9 @@ int find_folder_id(MFT *mft, char *path) {
 	int folder_ID = -1;
 	int exit = 0;
 	char *tok = strtok(actual_path, "/");
-	
-	int a = 0;
 	while(1) {
-		a = 0;
-		while(tok[a] != '\n' && tok[a] != '\0' && tok[a] != 47) {
-			a++;
-		}
-		char compare[a];
-		strncpy(compare, tok, a);
 		for (i = 0; i < mft -> size; i++) {
-			if (strcmp(compare, mft -> items[i] -> item_name) == 0) {
+			if (strcmp(tok, mft -> items[i] -> item_name) == 0) {
 				if (mft -> items[i] -> parentID == actual_parentID) {
 					if (mft -> items[i] -> isDirectory == 0) {
 						printf("%s is file, not folder!\n", tok);

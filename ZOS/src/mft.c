@@ -81,6 +81,22 @@ MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid) {
 	return NULL;
 }
 
+MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok) {
+	MFT_ITEM *item = NULL;
+
+	if (strlen(tok) > 0 && tok[strlen(tok) - 1] == '\n') tok[strlen(tok) - 1] = '\0';
+	char temp_path[strlen(vfs -> actual_path -> path) + strlen(tok)];
+	strcpy(temp_path, vfs -> actual_path -> path); 
+				
+	if (tok[0] != 47) strcat(temp_path, "/");
+	strcat(temp_path, tok);
+
+	int folder_ID = find_folder_id(vfs -> mft, temp_path);		
+	item = find_mft_item_by_uid(vfs -> mft, folder_ID);
+
+	return item;
+}
+
 void print_mft(MFT *mft) {
 	printf("\nMFT:\n----------------\n");
 	printf("Items count: %d (with root)\n", mft -> size);
