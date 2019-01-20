@@ -7,15 +7,16 @@
 void mft_init(VFS **vfs) {
 	(*vfs) -> mft = calloc(1, sizeof(MFT));
 	(*vfs) -> mft -> size = 0;
-	(*vfs) -> mft -> items = calloc((*vfs) -> mft -> size, sizeof(MFT_ITEM));
+	(*vfs) -> mft -> items = calloc((*vfs) -> mft -> size + 1, sizeof(MFT_ITEM));
 
 	mft_item_init(vfs, (*vfs) -> mft -> size, -1, ROOT_NAME, 1, DIRECTORY_SIZE);
+
+	//TODO smazat ve výsledném programu, pouze pro testovací účely
 	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "test", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "tete", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 1, "test2", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "tete2", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 3, "test3", 1, DIRECTORY_SIZE);
-
 }
 
 void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size) {
@@ -33,7 +34,6 @@ void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_order_total = 1;              
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_size = item_size;        
 	strcpy((*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_name, name);
-
 	mft_fragment_init(vfs, &((*vfs) -> mft -> items[(*vfs) -> mft -> size]));
 
 	(*vfs) -> mft -> size++;
@@ -90,7 +90,6 @@ MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok) {
 				
 	if (tok[0] != 47) strcat(temp_path, "/");
 	strcat(temp_path, tok);
-
 	int folder_ID = find_folder_id(vfs -> mft, temp_path);		
 	item = find_mft_item_by_uid(vfs -> mft, folder_ID);
 
@@ -103,7 +102,7 @@ void print_mft(MFT *mft) {
 	printf("Size: %d \n", 0);
 	printf("\nItems (+ directory, - file):\n");
 	int i;
-	for (i = 1; i < mft -> size; i++) {
+	for (i = 0; i < mft -> size; i++) {
 		if (mft -> items[i] -> isDirectory == 1) printf("+");
 		else printf("-");
 		printf("%s\n", mft -> items[i] -> item_name);

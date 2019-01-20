@@ -132,7 +132,7 @@ int find_folder_id(MFT *mft, char *path) {
 			} 
 			folder_ID = -1;
 		}
-
+		if (folder_ID == -1) break;
 		if (exit == 1) break;
 		tok = strtok(NULL, "/");
 		if (tok == NULL) break;

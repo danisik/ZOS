@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 	*/
 
 	printf("WELCOME IN PSEUDO-NTFS (iNTFS)\n\n");
-	vfs_init(&vfs, filename, DISK_SIZE);
+	vfs_init(&vfs, filename, DISK_SIZE, 0);
 	
 	char command[MAX_LENGTH_OF_COMMAND];
 	char *tok;

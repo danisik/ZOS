@@ -7,7 +7,7 @@
 #define SIGNATURE "Danisik"
 #define DESCRIPTOR "pseudoNTFS"
 
-void vfs_init(VFS **vfs, char *filename, size_t disk_size) {
+void vfs_init(VFS **vfs, char *filename, size_t disk_size, int formatting) {
 
 	(*vfs) = calloc(1, sizeof(VFS));
 
@@ -21,8 +21,8 @@ void vfs_init(VFS **vfs, char *filename, size_t disk_size) {
 	path_init(vfs);
 
 	FILE *test_if_exists = fopen(filename, "rb");
-	//if (test_if_exists == NULL) {
-		printf("Data file with name %s not found, creating new\n", filename);
+	//if (test_if_exists == NULL || formatting == 1) {
+		if (formatting == 0) printf("Data file with name %s not found, creating new\n", filename);
 
 		BOOT_RECORD *boot_record;
 		boot_record_init(&boot_record, SIGNATURE, DESCRIPTOR, disk_size, CLUSTER_SIZE);
@@ -35,14 +35,14 @@ void vfs_init(VFS **vfs, char *filename, size_t disk_size) {
 		mft_init(vfs);
 
 		create_vfs_file(vfs);
-	/*}
-	else {
+	//}
+	/*else {
 		printf("Data file with name %s found, filling structures\n", filename);
 		fread_boot_record(vfs, test_if_exists);
 		fread_mft(vfs, test_if_exists);
 		fread_bitmap(vfs, test_if_exists);
-	}
-	*/
+	}*/
+	
 }
 
 void path_init(VFS **vfs) {

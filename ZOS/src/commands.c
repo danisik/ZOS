@@ -87,18 +87,70 @@ void remove_file(VFS **vfs, char *tok) {
 void make_directory(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
-
-	if (tok == NULL || strlen(tok) == 0) {
+	if (tok == NULL || strlen(tok) <= 1) {
 		printf("NAME OF DIRECTORY NOT DEFINED\n");
 		return;
 	}
 
+	MFT_ITEM *item = get_mft_item_from_path((*vfs), tok);
+
+	if (item == NULL) {
+
+		int folders_count = 0;
+		char path[strlen(tok)];
+		strcpy(path, tok);
+		char *ttok = strtok(path, "/");
+		while(ttok != NULL) {
+			folders_count++;
+			ttok = strtok(NULL, "/");
+		}
+
+		char cutted_path[strlen(tok)];
+		tok = strtok(tok, "/");
+		strcpy(cutted_path, tok);
+		strcat(cutted_path, "/");
+		int i;
+		for (i = 1; i < folders_count - 1; i++) {
+			tok = strtok(NULL, "/");
+			strcat(cutted_path, tok);
+			if (i < folders_count - 2) strcat(cutted_path, "/");
+		}
+
+		tok = strtok(NULL, "/");
+		char folder_name[strlen(tok)];
+		strcpy(folder_name, tok);
+
+		int id = find_folder_id((*vfs) -> mft, cutted_path);
+		item = find_mft_item_by_uid((*vfs) -> mft, id);
+		
+		if (folders_count == 1 && item == NULL) {
+			mft_item_init(vfs, (*vfs) -> mft -> size, 0, folder_name, 1, DIRECTORY_SIZE);
+		}
+		else if (folders_count > 1 && item == NULL){
+			printf("PATH NOT FOUND\n");
+			return;
+		}
+		else {
+			mft_item_init(vfs, (*vfs) -> mft -> size, id, folder_name, 1, DIRECTORY_SIZE);
+		}
+		printf("Directory with name '%s' CREATED\n", folder_name);
+	}
+	else {
+		printf("Directory '%s' already EXISTS!\n", item -> item_name);
+		return;
+	}
+
+
+	//TODO kontrola:
+	//pokud mkdir nazev_slozky - pak kontrola aktuálního adresáře
+	//pokud mkdir path/nazev_slozky - pak otestovat zda existuje cesta, a pokud existuje tak otestovat jestli v té složce lze vytvořit novou složku se zadaným jménem
+	//poté můžu vytvořit novou složku
 
 	//mft_item_init(vfs, (*vfs) -> mft -> size, int parentID, tok, 1, DIRECTORY_SIZE)
 		
 	/*
 	4) Vytvoří adresář a1
-	mkdir a1
+	mkdir
 	Možný výsledek:
 	OK
 	PATH NOT FOUND (neexistuje zadaná cesta)
@@ -114,7 +166,6 @@ void remove_empty_directory(VFS **vfs, char *tok) {
 		printf("NAME OF DIRECTORY NOT DEFINED\n");
 		return;
 	}
-
 
 	/*
 	5) Smaže prázdný adresář a1
@@ -217,16 +268,6 @@ void move_to_directory(VFS **vfs, char *tok) {
 		set_path_to_root(vfs);	
 		return;
 	}
-
-
-	/*
-	8) Změní aktuální cestu do adresáře a1
-	cd ..
-	cd a1
-	Možný výsledek:
-	OK
-	PATH NOT FOUND (neexistující cesta)
-	*/
 }
 
 void actual_directory(VFS *vfs) {
@@ -363,7 +404,7 @@ void file_formatting(VFS **vfs, char *tok) {
 	int multiple_number = get_multiple(multiple, multiple_size);
 
 	int disk_size = my_atoi(number) * multiple_number;
-	vfs_init(vfs, (*vfs) -> filename, disk_size);
+	vfs_init(vfs, (*vfs) -> filename, disk_size, 1);
 	printf("Data file with name %s was formated. Disk size = %d\n", (*vfs) -> filename, disk_size);
 }
 

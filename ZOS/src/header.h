@@ -1,9 +1,8 @@
 #define UID_ITEM_FREE 0
 #define MFT_FRAGMENTS_COUNT 1
 #define VFS_FILENAME_LENGTH 12
-#define DISK_SIZE 10240 //10 KB 
-//#define DISK SIZE 10485760 //10 MB
-#define CLUSTER_SIZE 256
+#define DISK_SIZE 102400 //10 KB 
+#define CLUSTER_SIZE 4096
 #define MFT_SIZE_RATIO 0.1
 #define DIRECTORY_SIZE 1
 
@@ -99,7 +98,7 @@ struct the_vfs {
 void help();
 
 //vfs.c
-void vfs_init(VFS **vfs, char *filename, size_t disk_size);
+void vfs_init(VFS **vfs, char *filename, size_t disk_size, int formatting);
 void path_init(VFS **vfs);
 void print_vfs(VFS *vfs);
 void create_vfs_file(VFS **vfs);
