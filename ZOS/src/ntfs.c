@@ -50,59 +50,58 @@ int main(int argc, char *argv[]) {
         	}
 		tok = strtok(command, SPLIT_ARGS_CHAR);
 	
-
-		if (strncmp(tok, COPY_FILE, strlen(COPY_FILE)) == 0) {
+		if (compare_two_string(tok, COPY_FILE) == 0) {
 			copy_file(&vfs, tok); //not implemented
 		}
-		else if (strncmp(tok, MOVE_FILE, strlen(MOVE_FILE)) == 0) {
+		else if (compare_two_string(tok, MOVE_FILE) == 0) {
 			move_file(&vfs, tok); //not implemented
 		}
-		else if (strncmp(tok, REMOVE_FILE, strlen(REMOVE_FILE)) == 0) {
+		else if (compare_two_string(tok, REMOVE_FILE) == 0) {
 			remove_file(&vfs, tok); //not implemented 
 		}
-		else if (strncmp(tok, MAKE_DIRECTORY, strlen(MAKE_DIRECTORY)) == 0) {
-			make_directory(&vfs, tok); //not implemented
+		else if (compare_two_string(tok, MAKE_DIRECTORY) == 0) {
+			make_directory(&vfs, tok);
 		}
-		else if (strncmp(tok, REMOVE_EMPTY_DIRECTORY, strlen(REMOVE_EMPTY_DIRECTORY)) == 0) {
+		else if (compare_two_string(tok, REMOVE_EMPTY_DIRECTORY) == 0) {
 			remove_empty_directory(&vfs, tok); //not implemented
 		}
-		else if (strncmp(tok, PRINT_DIRECTORY, strlen(PRINT_DIRECTORY)) == 0) {
+		else if (compare_two_string(tok, PRINT_DIRECTORY) == 0) {
 			print_directory(vfs, tok);
 		}
-		else if (strncmp(tok, PRINT_FILE, strlen(PRINT_FILE)) == 0) {
+		else if (compare_two_string(tok, PRINT_FILE) == 0) {
 			print_file(vfs, tok); //not implemented
 		}
-		else if (strncmp(tok, MOVE_TO_DIRECTORY, strlen(MOVE_TO_DIRECTORY)) == 0) {
+		else if (compare_two_string(tok, MOVE_TO_DIRECTORY) == 0) {
 			move_to_directory(&vfs, tok);
 		}
-		else if (strncmp(tok, ACTUAL_DIRECTORY, strlen(ACTUAL_DIRECTORY)) == 0) {
+		else if (compare_two_string(tok, ACTUAL_DIRECTORY) == 0) {
 			actual_directory(vfs);
 		}
-		else if (strncmp(tok, MFT_ITEM_INFO, strlen(MFT_ITEM_INFO)) == 0) {
+		else if (compare_two_string(tok, MFT_ITEM_INFO) == 0) {
 			mft_item_info(vfs, tok);
 		}
-		else if (strncmp(tok, HD_TO_PSEUDO, strlen(HD_TO_PSEUDO)) == 0) {
+		else if (compare_two_string(tok, HD_TO_PSEUDO) == 0) {
 			hd_to_pseudo(&vfs, tok); //not implemented
 		}
-		else if (strncmp(tok, PSEUDO_TO_HD, strlen(PSEUDO_TO_HD)) == 0) {
+		else if (compare_two_string(tok, PSEUDO_TO_HD) == 0) {
 			pseudo_to_hd(&vfs, tok); //not implemented
 		}
-		else if (strncmp(tok, LOAD_COMMANDS, strlen(LOAD_COMMANDS)) == 0) {
+		else if (compare_two_string(tok, LOAD_COMMANDS) == 0) {
 			is_used_file = load_commands(&file_with_commands, tok); 
 		}
-		else if (strncmp(tok, FILE_FORMATTING, strlen(FILE_FORMATTING)) == 0) {
+		else if (compare_two_string(tok, FILE_FORMATTING) == 0) {
 			file_formatting(&vfs, tok);
 		}
-		else if (strncmp(tok, DEFRAG, strlen(DEFRAG)) == 0) {
+		else if (compare_two_string(tok, DEFRAG) == 0) {
 			defrag(); //not implemented
 		}
-		else if (strncmp(tok, HELP, strlen(HELP)) == 0) {
+		else if (compare_two_string(tok, HELP) == 0) {
 			commands_help();
 		}
-		else if (strncmp(tok, FULL_INFO, strlen(FULL_INFO)) == 0) {
+		else if (compare_two_string(tok, FULL_INFO) == 0) {
 			full_info(vfs);
 		}
-		else if (strncmp(tok, QUIT, strlen(QUIT)) == 0) {
+		else if (compare_two_string(tok, QUIT) == 0) {
 			break;
 		}
 		else {

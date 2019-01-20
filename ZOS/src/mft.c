@@ -7,7 +7,7 @@
 void mft_init(VFS **vfs) {
 	(*vfs) -> mft = calloc(1, sizeof(MFT));
 	(*vfs) -> mft -> size = 0;
-	(*vfs) -> mft -> items = calloc((*vfs) -> mft -> size + 1, sizeof(MFT_ITEM));
+	(*vfs) -> mft -> items = calloc((*vfs) -> mft -> size, sizeof(MFT_ITEM));
 
 	mft_item_init(vfs, (*vfs) -> mft -> size, -1, ROOT_NAME, 1, DIRECTORY_SIZE);
 
@@ -26,6 +26,8 @@ void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory
 		return;
 	} 
 
+	(*vfs) -> mft -> items = realloc((*vfs) -> mft -> items, ((*vfs) -> mft -> size + 1) * sizeof(MFT_ITEM));
+
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] = calloc(1, sizeof(MFT_ITEM));
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> uid = uid;
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> parentID = parentID;
@@ -37,6 +39,7 @@ void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory
 	mft_fragment_init(vfs, &((*vfs) -> mft -> items[(*vfs) -> mft -> size]));
 
 	(*vfs) -> mft -> size++;
+	//TODO fseek
 }
 
 void mft_fragment_init(VFS **vfs, MFT_ITEM **item) {
@@ -96,10 +99,35 @@ MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok) {
 	return item;
 }
 
+void remove_directory(VFS **vfs, int uid) {
+	int i;
+	for (i = 0; i < (*vfs) -> mft -> size; i++) {
+		if ((*vfs) -> mft -> items[i] -> uid == uid) {	
+			//TODO fseek
+			(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> fragments -> cluster_ID] = 0;
+			(*vfs) -> mft -> items[i] = (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1];
+			(*vfs) -> mft -> items = realloc((*vfs) -> mft -> items, ((*vfs) -> mft -> size - 1) * sizeof(MFT_ITEM));
+			(*vfs) -> mft -> size--;
+			return;
+		}
+	}
+}
+
+size_t get_size_of_items(MFT *mft) {
+	size_t size = 0;
+	int i;
+	
+	for(i = 0; i < mft -> size; i++) {
+		size += mft -> items[i] -> item_size;
+	}
+
+	return size;
+}
+
 void print_mft(MFT *mft) {
 	printf("\nMFT:\n----------------\n");
-	printf("Items count: %d (with root)\n", mft -> size);
-	printf("Size: %d \n", 0);
+	printf("Items count: %d\n", mft -> size);
+	printf("Size: %lu \n", get_size_of_items(mft));
 	printf("\nItems (+ directory, - file):\n");
 	int i;
 	for (i = 0; i < mft -> size; i++) {

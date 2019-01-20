@@ -116,6 +116,8 @@ void fread_mft(VFS **vfs, FILE *file);
 MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok);
 MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid);
 MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok);
+void remove_directory(VFS **vfs, int uid);
+size_t get_size_of_items(MFT *mft);
 void print_mft(MFT *mft);
 
 //bitmap.c
@@ -143,6 +145,7 @@ void full_info(VFS *vfs);
 void commands_help();
 
 //functions.c
+int compare_two_string(char *string1, char *string2);
 void set_path_to_root(VFS **vfs);
 void go_to_parent_folder(VFS **vfs);
 int array_length_strtok(char *path);
@@ -152,4 +155,5 @@ int bitmap_contains_free_cluster(BITMAP *bitmap);
 int find_free_cluster(BITMAP **bitmap);
 int find_folder_id(MFT *mft, char *path);
 void print_folder_content(MFT *mft, int parentID);
+int is_folder_empty(MFT *mft, int folderID);
 int my_atoi(const char* snum);

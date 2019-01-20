@@ -6,6 +6,28 @@
 #include <ctype.h>
 #include <math.h>
 
+//1 - not same
+//0 - same
+int compare_two_string(char *string1, char *string2) {
+	char s1[strlen(string1)];
+	char s2[strlen(string2)];
+	
+	strcpy(s1, string1);
+	strcpy(s2, string2);
+
+	if (strlen(s1) > 0 && s1[strlen(s1) - 1] == '\n') s1[strlen(s1) - 1] = '\0';
+	if (strlen(s2) > 0 && s2[strlen(s2) - 1] == '\n') s2[strlen(s2) - 1] = '\0';
+	
+	if (strlen(s1) != strlen(s2)) return 1;
+	else {
+		int i;
+		for (i = 0; i < strlen(s1); i++) {
+			if (s1[i] != s2[i]) return 1;
+		}
+		return 0;
+	}
+}
+
 void set_path_to_root(VFS **vfs) {
 	memset((*vfs) -> actual_path -> path, 0, PATH_MAX);
 }
@@ -150,6 +172,15 @@ void print_folder_content(MFT *mft, int parentID) {
 			printf("%s\n", mft -> items[i] -> item_name);
 		}
 	}
+}
+
+int is_folder_empty(MFT *mft, int folderID) {
+	int i;
+	for (i = 0; i < mft -> size; i++) {
+		if (mft -> items[i] -> parentID == folderID) return 1;
+	}
+	
+	return 0;
 }
 
 int my_atoi(const char* snum) {
