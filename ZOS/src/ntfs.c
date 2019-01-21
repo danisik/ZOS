@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 			make_directory(&vfs, tok);
 		}
 		else if (compare_two_string(tok, REMOVE_EMPTY_DIRECTORY) == 0) {
-			remove_empty_directory(&vfs, tok); //not implemented
+			remove_empty_directory(&vfs, tok);
 		}
 		else if (compare_two_string(tok, PRINT_DIRECTORY) == 0) {
 			print_directory(vfs, tok);

@@ -100,8 +100,10 @@ void help();
 //vfs.c
 void vfs_init(VFS **vfs, char *filename, size_t disk_size, int formatting);
 void path_init(VFS **vfs);
-void print_vfs(VFS *vfs);
 void create_vfs_file(VFS **vfs);
+void set_path_to_root(VFS **vfs);
+void go_to_parent_folder(VFS **vfs);
+void print_vfs(VFS *vfs);
 
 //boot_record.c
 void boot_record_init(BOOT_RECORD **boot_record, char *signature, char *volume_descriptor, int32_t disk_size, int32_t cluster_size);
@@ -118,11 +120,19 @@ MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid);
 MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok);
 void remove_directory(VFS **vfs, int uid);
 size_t get_size_of_items(MFT *mft);
+int find_folder_id(MFT *mft, char *path);
+void print_folder_content(MFT *mft, int parentID);
+int is_folder_empty(MFT *mft, int folderID);
+void fwrite_mft(VFS **vfs);
+void fwrite_mft_item(VFS **vfs);
 void print_mft(MFT *mft);
 
 //bitmap.c
 void bitmap_init(BITMAP **bitmap, int32_t cluster_count);
 void fread_bitmap(VFS **vfs, FILE *file);
+int bitmap_contains_free_cluster(BITMAP *bitmap);
+int find_free_cluster(BITMAP **bitmap);
+void fwrite_bitmap(VFS **vfs);
 void print_bitmap(BITMAP *bitmap);
 
 //commands.c
@@ -146,14 +156,7 @@ void commands_help();
 
 //functions.c
 int compare_two_string(char *string1, char *string2);
-void set_path_to_root(VFS **vfs);
-void go_to_parent_folder(VFS **vfs);
 int array_length_strtok(char *path);
 int index_of_last_digit(char *size);
 int get_multiple(char *multiple, int size);
-int bitmap_contains_free_cluster(BITMAP *bitmap);
-int find_free_cluster(BITMAP **bitmap);
-int find_folder_id(MFT *mft, char *path);
-void print_folder_content(MFT *mft, int parentID);
-int is_folder_empty(MFT *mft, int folderID);
 int my_atoi(const char* snum);

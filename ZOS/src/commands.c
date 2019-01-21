@@ -13,6 +13,8 @@ void copy_file(VFS **vfs, char *tok) {
 		return;
 	}
 
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
@@ -21,8 +23,6 @@ void copy_file(VFS **vfs, char *tok) {
 		return;
 	}
 
-	char source[MAX_LENGTH_OF_COMMAND];
-	strcpy(source, tok);
 	char destination[MAX_LENGTH_OF_COMMAND];
 	strcpy(destination, tok);
 
@@ -45,6 +45,9 @@ void move_file(VFS **vfs, char *tok) {
 		return;
 	}
 
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
+
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
 	if (tok == NULL || strlen(tok) <= 1) {
@@ -52,8 +55,6 @@ void move_file(VFS **vfs, char *tok) {
 		return;
 	}
 
-	char source[MAX_LENGTH_OF_COMMAND];
-	strcpy(source, tok);
 	char destination[MAX_LENGTH_OF_COMMAND];
 	strcpy(destination, tok);
 
@@ -300,6 +301,8 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 		return;
 	}
 
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 	if (tok == NULL || strlen(tok) <= 1) {
@@ -307,8 +310,6 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 		return;
 	}
 
-	char source[MAX_LENGTH_OF_COMMAND];
-	strcpy(source, tok);
 	char destination[MAX_LENGTH_OF_COMMAND];
 	strcpy(destination, tok);
 
@@ -331,6 +332,8 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 		return;
 	}
 
+	char source[MAX_LENGTH_OF_COMMAND];
+	strcpy(source, tok);
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
@@ -339,8 +342,6 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 		return;
 	}
 
-	char source[MAX_LENGTH_OF_COMMAND];
-	strcpy(source, tok);
 	char destination[MAX_LENGTH_OF_COMMAND];
 	strcpy(destination, tok);
 
