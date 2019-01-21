@@ -61,9 +61,11 @@ void create_vfs_file(VFS **vfs) {
 	} 
 	else {		
         	fwrite((*vfs) -> boot_record, sizeof(BOOT_RECORD), 1, (*vfs) -> FILE);
+		fflush((*vfs) -> FILE);
 
 		fseek((*vfs) -> FILE, (*vfs) -> boot_record -> bitmap_start_address, SEEK_SET);
 	        fwrite((*vfs) -> bitmap -> data, sizeof(unsigned char), (*vfs) -> bitmap -> length, (*vfs) -> FILE);
+		fflush((*vfs) -> FILE);
 
 		fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address, SEEK_SET);
 	}

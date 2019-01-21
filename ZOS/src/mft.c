@@ -13,11 +13,12 @@ void mft_init(VFS **vfs) {
 
 	//TODO smazat ve výsledném programu, pouze pro testovací účely
 	
-	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "test", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "tete", 1, DIRECTORY_SIZE);
-	mft_item_init(vfs, (*vfs) -> mft -> size, 1, "test2", 1, 9000);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "test", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "tete2", 1, DIRECTORY_SIZE);
-	mft_item_init(vfs, (*vfs) -> mft -> size, 3, "test3", 1, DIRECTORY_SIZE);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "test3", 1, DIRECTORY_SIZE);
+			remove_directory(vfs, 1);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "test2", 1, 9000);
 	
 }
 
@@ -54,6 +55,11 @@ void mft_fragment_init(VFS **vfs, int cluster_count) {
 	int i = 0;	
 	int already_setted = 0;
 	while(1) {
+		if (i >= MFT_FRAGMENTS_COUNT) {
+			//TODO free item
+			printf("FILE TOO LARGE\n");
+			return;
+		}
 		(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] = calloc(1, sizeof(MFT_FRAGMENT));
 		struct the_fragment_temp *temp = find_free_cluster(&(*vfs) -> bitmap, cluster_count - already_setted);	
 		if (temp -> start_cluster_ID == -1 && temp -> count == 0 && temp -> successful == 0) break;
@@ -70,6 +76,16 @@ void mft_fragment_init(VFS **vfs, int cluster_count) {
 	}
 
 	if (cluster_count != already_setted) {
+
+		for (i = 0; i < (*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments_created; i++) {
+			int from = (*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] -> start_cluster_ID;
+			int count = (*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] -> fragment_count;
+
+			int j;
+			for (j = 0; j < count; j++) {
+				(*vfs) -> bitmap -> data[from + j] = 0;
+			}
+		}
 		//TODO kontrola zda jsme obsadili všechny potřebné clustery, pokud ne, vyhodit out of memory			
 		//free vytvořený item
 		printf("smazat item");
@@ -135,7 +151,6 @@ MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok) {
 	strcat(temp_path, tok);
 	int folder_ID = find_folder_id(vfs -> mft, temp_path);		
 	item = find_mft_item_by_uid(vfs -> mft, folder_ID);
-
 	return item;
 }
 
@@ -143,10 +158,9 @@ void remove_directory(VFS **vfs, int uid) {
 	int i;
 	for (i = 0; i < (*vfs) -> mft -> size; i++) {
 		if ((*vfs) -> mft -> items[i] -> uid == uid) {	
-
-			//TODO upravit fragmenty
-			//(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> fragments -> start_cluster_ID] = 0;
+			(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> fragments[0] -> start_cluster_ID] = 0; 
 			(*vfs) -> mft -> items[i] = (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1];
+			(*vfs) -> mft -> items[i] -> uid = uid;
 			(*vfs) -> mft -> items = realloc((*vfs) -> mft -> items, ((*vfs) -> mft -> size - 1) * sizeof(MFT_ITEM));
 			(*vfs) -> mft -> size--;
 
@@ -229,13 +243,15 @@ int is_folder_empty(MFT *mft, int folderID) {
 void fwrite_mft(VFS **vfs) {
 	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
 	fwrite((*vfs) -> mft, sizeof(MFT), 1, (*vfs) -> FILE);
-	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
+	//fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
+	fflush((*vfs) -> FILE);
 }
 
 void fwrite_mft_item(VFS **vfs) {
 	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + ((*vfs) -> mft -> size - 1)*sizeof(MFT_ITEM), SEEK_SET);
 	fwrite((*vfs) -> mft -> items[(*vfs) -> mft -> size - 1], sizeof(MFT_ITEM), 1, (*vfs) -> FILE);
-	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + (*vfs) -> mft -> size*sizeof(MFT_ITEM), SEEK_SET);
+	//fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + (*vfs) -> mft -> size*sizeof(MFT_ITEM), SEEK_SET);
+	fflush((*vfs) -> FILE);
 }
 
 void print_mft(MFT *mft) {

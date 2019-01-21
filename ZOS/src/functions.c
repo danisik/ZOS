@@ -17,7 +17,7 @@ int compare_two_string(char *string1, char *string2) {
 
 	if (strlen(s1) > 0 && s1[strlen(s1) - 1] == '\n') s1[strlen(s1) - 1] = '\0';
 	if (strlen(s2) > 0 && s2[strlen(s2) - 1] == '\n') s2[strlen(s2) - 1] = '\0';
-	
+
 	if (strlen(s1) != strlen(s2)) return 1;
 	else {
 		int i;

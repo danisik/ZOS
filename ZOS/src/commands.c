@@ -145,14 +145,9 @@ void remove_empty_directory(VFS **vfs, char *tok) {
 		return;
 	}
 
-	char full_path[PATH_MAX];
-	strcpy(full_path, (*vfs) -> actual_path -> path);
-	if(strlen((*vfs) -> actual_path -> path) > 1) strcat(full_path, "/");
-	strcat(full_path, tok);
-
-	MFT_ITEM *item = get_mft_item_from_path((*vfs), full_path);
+	MFT_ITEM *item = get_mft_item_from_path((*vfs), tok);
 	if (item == NULL) {
-		printf("FILE NOT FOUND\n");
+		printf("DIRECTORY NOT FOUND\n");
 		return;
 	}
 	else {
@@ -291,7 +286,7 @@ void mft_item_info(VFS *vfs, char *tok) {
 	printf("FRAGMENTS: Count - %d\n", item -> fragments_created);	
 	int i;
 	for (i = 0; i < item -> fragments_created; i++) {	
-		printf("FRAGMENT %d: Location - %d;\n", i, item -> fragments[i] -> fragment_start_address);
+		printf("FRAGMENT %d: Location - %d\n", i, item -> fragments[i] -> fragment_start_address);
 		printf("	CLUSTERS: START_ID - %d; Count - %d\n", item -> fragments[i] -> start_cluster_ID, item -> fragments[i] -> fragment_count);
 	}
 }
