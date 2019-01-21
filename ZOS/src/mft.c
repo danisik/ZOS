@@ -206,16 +206,9 @@ int find_folder_id(MFT *mft, char *path) {
 		for (i = 0; i < mft -> size; i++) {
 			if (strcmp(tok, mft -> items[i] -> item_name) == 0) {
 				if (mft -> items[i] -> parentID == actual_parentID) {
-					if (mft -> items[i] -> isDirectory == 0) {
-						printf("%s is file, not folder!\n", tok);
-						exit = 1;							
-						break;
-					}
-					else {
-						folder_ID = mft -> items[i] -> uid;
-						actual_parentID = folder_ID;
-						break;
-					}
+					folder_ID = mft -> items[i] -> uid;
+					actual_parentID = folder_ID;
+					break;
 				}
 			} 
 			folder_ID = -1;
@@ -279,7 +272,49 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 		printf("File '%s' CREATED\n", filename);
 	}
 
-	//fwrite do datový části
+	int i, j;
+
+	int file_part = file_size / CLUSTER_SIZE;
+	if (file_size % CLUSTER_SIZE != 0) file_part++;
+
+	int read_size = CLUSTER_SIZE;
+	char buffer[file_part][read_size];
+	
+	MFT_ITEM *item = find_mft_item_by_name((*vfs) -> mft, filename);
+
+	for (i = 0; i < file_part; i++) {
+		fseek(source, i * read_size, SEEK_SET);
+		fread(buffer[i], read_size, 1, source);
+		if (i == (file_part - 1)) buffer[i][strlen(buffer[i]) - 1] = '\0';
+	}
+
+	for (i = 0; i < item -> fragments_created; i++) {
+		for (j = 0; j < item -> fragment_count[i]; j++) {
+			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
+			fwrite(buffer[i+j],CLUSTER_SIZE, 1, (*vfs) -> FILE); 
+		}
+	}
+}
+
+void print_file_content(VFS *vfs, MFT_ITEM *item) {
+	int file_part = item -> item_size / CLUSTER_SIZE;
+	if (item -> item_size % CLUSTER_SIZE != 0) file_part++;
+
+	int read_size = CLUSTER_SIZE;
+	char buffer[file_part][read_size];
+
+	int i, j;
+	for (i = 0; i < item -> fragments_created; i++) {
+		for (j = 0; j < item -> fragment_count[i]; j++) {
+			fseek(vfs -> FILE, vfs -> boot_record -> mft_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
+			fread(buffer[i+j], CLUSTER_SIZE, 1, vfs -> FILE); 
+		}
+	}
+
+	for (i = 0; i < file_part; i++) {
+		printf("%s", buffer[i]);
+	}
+	printf("\n");
 }
 
 void print_mft(MFT *mft) {

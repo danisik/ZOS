@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 			mft_item_info(vfs, tok);
 		}
 		else if (compare_two_string(tok, HD_TO_PSEUDO) == 0) {
-			hd_to_pseudo(&vfs, tok); //not implemented
+			hd_to_pseudo(&vfs, tok);
 		}
 		else if (compare_two_string(tok, PSEUDO_TO_HD) == 0) {
 			pseudo_to_hd(&vfs, tok); //not implemented

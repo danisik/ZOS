@@ -131,6 +131,7 @@ int is_folder_empty(MFT *mft, int folderID);
 void fwrite_mft(VFS **vfs);
 void fwrite_mft_item(VFS **vfs);
 void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM *dest);
+void print_file_content(VFS *vfs, MFT_ITEM *item);
 void print_mft(MFT *mft);
 
 //bitmap.c

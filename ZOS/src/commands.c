@@ -151,6 +151,10 @@ void remove_empty_directory(VFS **vfs, char *tok) {
 		return;
 	}
 	else {
+		if (!item -> isDirectory) {
+			printf("ITEM IS FILE\n");
+			return;
+		}
 		if (is_folder_empty((*vfs) -> mft, item -> uid) == 0) {
 			printf("DIRECTORY '%s' REMOVED\n", item -> item_name);
 			remove_directory(vfs, item -> uid);
@@ -180,7 +184,12 @@ void print_directory(VFS *vfs, char *tok) {
 		}
 		
 		if (item != NULL) {
-			print_folder_content(vfs -> mft, folder_ID);
+			if (item -> isDirectory) {
+				print_folder_content(vfs -> mft, folder_ID);
+			}
+			else {
+				printf("ITEM IS FILE\n");
+			}
 		}
 		else printf("PATH NOT FOUND\n");
 	}
@@ -188,7 +197,12 @@ void print_directory(VFS *vfs, char *tok) {
 		item = get_mft_item_from_path(vfs, tok);
 
 		if (item != NULL) {
-			print_folder_content(vfs -> mft, item -> uid);
+			if (item -> isDirectory) {
+				print_folder_content(vfs -> mft, item -> uid);
+			}
+			else {
+				printf("ITEM IS FILE\n");
+			}
 		}
 		else printf("PATH NOT FOUND\n");
 	}
@@ -202,6 +216,18 @@ void print_file(VFS *vfs, char *tok) {
 		printf("FILENAME NOT DEFINED\n");
 		return;
 	}
+
+	MFT_ITEM *item = get_mft_item_from_path(vfs, tok);
+
+	if (item != NULL) {
+		if (!item -> isDirectory) {
+			print_file_content(vfs, item);
+		}
+		else {
+			printf("ITEM IS DIRECTORY\n");
+		}
+	}
+	else printf("FILE NOT FOUND\n");
 
 	/*
 	7) Vypíše obsah souboru s1
@@ -235,6 +261,12 @@ void move_to_directory(VFS **vfs, char *tok) {
 				item = find_mft_item_by_uid((*vfs) -> mft, folder_ID);
 				
 				if (item != NULL) {
+				
+					if (!item -> isDirectory) {
+						printf("ITEM IS FILE\n");
+						return;
+					}
+	
 					set_path_to_root(vfs);	
 					if (tok[strlen(tok) - 1] == 47) strncat((*vfs) -> actual_path -> path, temp_path, strlen(temp_path) - 1);
 					else strncat((*vfs) -> actual_path -> path, temp_path, strlen(temp_path));
@@ -309,7 +341,7 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 		return;
 	}
 
-	FILE *file_src = fopen(source, "r+");
+	FILE *file_src = fopen(source, "rb");
 	if (file_src == NULL) {
 		printf("FILE NOT FOUND\n");
 		return;
@@ -326,15 +358,6 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 	}
 
 	create_file_from_FILE(vfs, file_src, source, dest);
-
-	/*
-	11) Nahraje soubor s1 z pevného disku do umístění s2 v pseudoNTFS
-	incp s1 s2
-	Možný výsledek:
-	OK
-	FILE NOT FOUND (není zdroj)
-	PATH NOT FOUND (neexistuje cílová cesta)
-	*/
 }
 
 void pseudo_to_hd(VFS **vfs, char *tok) {
