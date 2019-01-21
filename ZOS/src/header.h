@@ -34,7 +34,6 @@
 
 typedef struct the_fragmet_temp FRAGMENT_TEMP;
 typedef struct the_bitmap BITMAP;
-typedef struct the_mft_fragment MFT_FRAGMENT;
 typedef struct the_mft_item MFT_ITEM;
 typedef struct the_mft MFT;
 typedef struct the_boot_record BOOT_RECORD;
@@ -52,21 +51,19 @@ struct the_bitmap {
 	unsigned char *data;
 };
 
-struct the_mft_fragment {
-	int32_t fragment_start_address;     //start adresa
-	int32_t fragment_count;             //pocet clusteru ve fragmentu
-	int32_t start_cluster_ID;
-};
-
 struct the_mft_item {
-	int32_t uid;                                        //UID polozky, pokud UID = UID_ITEM_FREE, je polozka volna
+	int32_t uid;                                       	 //UID polozky, pokud UID = UID_ITEM_FREE, je polozka volna
 	int32_t parentID;
-	int isDirectory;                                    //soubor, nebo adresar (0 soubor, 1 adresar)
-	int8_t item_order;                                  //poradi v MFT pri vice souborech, jinak 1
-	int8_t item_order_total;                            //celkovy pocet polozek v MFT, jinak 1
-	char item_name[12];                                 //8+3 + /0 C/C++ ukoncovaci string znak
-	int32_t item_size;                                  //velikost souboru v bytech
-	MFT_FRAGMENT *fragments[MFT_FRAGMENTS_COUNT]; 	    //fragmenty souboru
+	int isDirectory;                                   	 //soubor, nebo adresar (0 soubor, 1 adresar)
+	int8_t item_order;                                 	 //poradi v MFT pri vice souborech, jinak 1
+	int8_t item_order_total;                           	 //celkovy pocet polozek v MFT, jinak 1
+	char item_name[12];                                	 //8+3 + /0 C/C++ ukoncovaci string znak
+	int32_t item_size;                                  	//velikost souboru v bytech
+
+	//fragments
+	int32_t fragment_start_address[MFT_FRAGMENTS_COUNT];	//start adresa
+	int32_t fragment_count[MFT_FRAGMENTS_COUNT];            //pocet clusteru ve fragmentu
+	int32_t start_cluster_ID[MFT_FRAGMENTS_COUNT];
 	int fragments_created;
 };
 
@@ -133,7 +130,6 @@ void print_folder_content(MFT *mft, int parentID);
 int is_folder_empty(MFT *mft, int folderID);
 void fwrite_mft(VFS **vfs);
 void fwrite_mft_item(VFS **vfs);
-void fwrite_mft_fragments(VFS **vfs);
 void print_mft(MFT *mft);
 
 //bitmap.c

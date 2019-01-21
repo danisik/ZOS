@@ -116,4 +116,5 @@ void help() {
 	printf("First parameter (data filename): iNTFS.dat\n");
 	printf("Example: ./ntfs iNTFS.dat\n");	
 	return;
+
 }

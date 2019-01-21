@@ -62,7 +62,6 @@ struct the_fragment_temp *find_free_cluster(BITMAP **bitmap, int needed_count) {
 void fwrite_bitmap(VFS **vfs) {
 	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> bitmap_start_address, SEEK_SET);
 	fwrite((*vfs) -> bitmap -> data, sizeof(unsigned char), (*vfs) -> bitmap -> length, (*vfs) -> FILE);
-	//fseek((*vfs) -> FILE, (*vfs) -> boot_record -> bitmap_start_address, SEEK_SET);
 	fflush((*vfs) -> FILE);
 }
 
@@ -78,4 +77,3 @@ void print_bitmap(BITMAP *bitmap) {
 	}
 	printf("\n");
 }
-

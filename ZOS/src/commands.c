@@ -286,8 +286,8 @@ void mft_item_info(VFS *vfs, char *tok) {
 	printf("FRAGMENTS: Count - %d\n", item -> fragments_created);	
 	int i;
 	for (i = 0; i < item -> fragments_created; i++) {	
-		printf("FRAGMENT %d: Location - %d\n", i, item -> fragments[i] -> fragment_start_address);
-		printf("	CLUSTERS: START_ID - %d; Count - %d\n", item -> fragments[i] -> start_cluster_ID, item -> fragments[i] -> fragment_count);
+		printf("FRAGMENT %d: Location - %d\n", i, item -> fragment_start_address[i]);
+		printf("	CLUSTERS: START_ID - %d; Count - %d\n", item -> start_cluster_ID[i], item -> fragment_count[i]);
 	}
 }
 
