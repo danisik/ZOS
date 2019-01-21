@@ -121,7 +121,7 @@ void print_boot_record(BOOT_RECORD *boot_record);
 //mft.c
 void mft_init(VFS **vfs);
 void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size);
-void mft_fragment_init(VFS **vfs, int cluster_count);
+int mft_fragment_init(VFS **vfs, int cluster_count);
 void fread_mft(VFS **vfs, FILE *file);
 MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok);
 MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid);
@@ -133,6 +133,7 @@ void print_folder_content(MFT *mft, int parentID);
 int is_folder_empty(MFT *mft, int folderID);
 void fwrite_mft(VFS **vfs);
 void fwrite_mft_item(VFS **vfs);
+void fwrite_mft_fragments(VFS **vfs);
 void print_mft(MFT *mft);
 
 //bitmap.c

@@ -17,7 +17,7 @@ void mft_init(VFS **vfs) {
 	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "test", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "tete2", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "test3", 1, DIRECTORY_SIZE);
-			remove_directory(vfs, 1);
+	//remove_directory(vfs, 1);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "test2", 1, 9000);
 	
 }
@@ -43,22 +43,24 @@ void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory
 
 	int cluster_count = item_size / CLUSTER_SIZE;
 	if ((item_size % CLUSTER_SIZE) != 0) cluster_count++;
-	mft_fragment_init(vfs, cluster_count);	
 
-	(*vfs) -> mft -> size++;
+	int success = mft_fragment_init(vfs, cluster_count);	
 
-	fwrite_mft(vfs);
-	fwrite_mft_item(vfs);
+	if (success) {
+		(*vfs) -> mft -> size++;
+
+		fwrite_mft(vfs);
+		fwrite_mft_item(vfs);
+	}
 }
 
-void mft_fragment_init(VFS **vfs, int cluster_count) {
+int mft_fragment_init(VFS **vfs, int cluster_count) {
 	int i = 0;	
 	int already_setted = 0;
 	while(1) {
 		if (i >= MFT_FRAGMENTS_COUNT) {
-			//TODO free item
 			printf("FILE TOO LARGE\n");
-			return;
+			break;
 		}
 		(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] = calloc(1, sizeof(MFT_FRAGMENT));
 		struct the_fragment_temp *temp = find_free_cluster(&(*vfs) -> bitmap, cluster_count - already_setted);	
@@ -86,14 +88,20 @@ void mft_fragment_init(VFS **vfs, int cluster_count) {
 				(*vfs) -> bitmap -> data[from + j] = 0;
 			}
 		}
-		//TODO kontrola zda jsme obsadili všechny potřebné clustery, pokud ne, vyhodit out of memory			
-		//free vytvořený item
-		printf("smazat item");
+		printf("Out of memory, cannot create new files\n");
+
+		if ((*vfs) -> mft -> items[(*vfs) -> mft -> size] -> isDirectory) {
+			remove_directory(vfs, (*vfs) -> mft -> items[(*vfs) -> mft -> size] -> uid);
+		}
+		else {
+			//TODO remove_file
+		}		
+		return 0;
 	}
 
-	//TODO fwrite fragmenty ??
 
 	fwrite_bitmap(vfs);
+	return 1;
 }
 
 void fread_mft(VFS **vfs, FILE *file) {
@@ -102,11 +110,30 @@ void fread_mft(VFS **vfs, FILE *file) {
 	fread((*vfs) -> mft, sizeof(MFT), 1, file);
 	
 	(*vfs) -> mft -> items = calloc((*vfs) -> mft -> size, sizeof(MFT_ITEM));
+
 	int i;
+
 	for (i = 0; i < (*vfs) -> mft -> size; i++) {
 		(*vfs) -> mft -> items[i] = calloc(1, sizeof(MFT_ITEM));
-		fseek(file, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + i*sizeof(MFT_ITEM), SEEK_SET);
+		int j;
+
+		fseek(file, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + i*sizeof(MFT_ITEM) 
+		+ 1 + i*sizeof(MFT_FRAGMENT)*MFT_FRAGMENTS_COUNT, SEEK_SET);
+
 		fread((*vfs) -> mft -> items[i], sizeof(MFT_ITEM), 1, file); 
+
+		printf("%s - ", (*vfs) -> mft -> items[i] -> item_name);
+		for (j = 0; j < MFT_FRAGMENTS_COUNT; j++) {
+		printf("%d - %lu;", j, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + (i+1)*sizeof(MFT_ITEM) 
+				+ j*sizeof(MFT_FRAGMENT)*MFT_FRAGMENTS_COUNT);
+			fseek(file, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + i*sizeof(MFT_ITEM) 
+				+ j*sizeof(MFT_FRAGMENT)*MFT_FRAGMENTS_COUNT, SEEK_SET);			
+			(*vfs) -> mft -> items[i] -> fragments[j] = calloc(1, sizeof(MFT_FRAGMENT));
+			
+			fread((*vfs) -> mft -> items[i] -> fragments[j], sizeof(MFT_FRAGMENT), 1, file);
+			
+		}
+		printf("\n");
 	}
 }
 
@@ -159,14 +186,19 @@ void remove_directory(VFS **vfs, int uid) {
 	for (i = 0; i < (*vfs) -> mft -> size; i++) {
 		if ((*vfs) -> mft -> items[i] -> uid == uid) {	
 			(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> fragments[0] -> start_cluster_ID] = 0; 
-			(*vfs) -> mft -> items[i] = (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1];
+			if (((*vfs) -> mft -> size - 1) > 0) (*vfs) -> mft -> items[i] = (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1];
 			(*vfs) -> mft -> items[i] -> uid = uid;
 			(*vfs) -> mft -> items = realloc((*vfs) -> mft -> items, ((*vfs) -> mft -> size - 1) * sizeof(MFT_ITEM));
 			(*vfs) -> mft -> size--;
 
 
 			fwrite_mft(vfs);
-			fwrite_mft_item(vfs);
+			
+			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + i*sizeof(MFT_ITEM) 
+				+ 1 + i*sizeof(MFT_FRAGMENT)*MFT_FRAGMENTS_COUNT, SEEK_SET);
+			fwrite((*vfs) -> mft -> items[i], sizeof(MFT_ITEM), 1, (*vfs) -> FILE);
+			fflush((*vfs) -> FILE);
+
 			fwrite_bitmap(vfs);
 			return;
 		}
@@ -243,14 +275,28 @@ int is_folder_empty(MFT *mft, int folderID) {
 void fwrite_mft(VFS **vfs) {
 	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
 	fwrite((*vfs) -> mft, sizeof(MFT), 1, (*vfs) -> FILE);
-	//fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address, SEEK_SET);
 	fflush((*vfs) -> FILE);
 }
 
 void fwrite_mft_item(VFS **vfs) {
-	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + ((*vfs) -> mft -> size - 1)*sizeof(MFT_ITEM), SEEK_SET);
+	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + ((*vfs) -> mft -> size - 1)*sizeof(MFT_ITEM) 
+		+ 1 + ((*vfs) -> mft -> size - 1)*sizeof(MFT_FRAGMENT)*MFT_FRAGMENTS_COUNT, SEEK_SET);
 	fwrite((*vfs) -> mft -> items[(*vfs) -> mft -> size - 1], sizeof(MFT_ITEM), 1, (*vfs) -> FILE);
-	//fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + (*vfs) -> mft -> size*sizeof(MFT_ITEM), SEEK_SET);
+	fflush((*vfs) -> FILE);
+	fwrite_mft_fragments(vfs);
+}
+
+void fwrite_mft_fragments(VFS **vfs) {
+	int i;
+	printf("%s - ", (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1] -> item_name);
+	for (i = 0; i < (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1] -> fragments_created; i++) {
+		printf("%d - %lu;", i, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + ((*vfs) -> mft -> size)*sizeof(MFT_ITEM) 
+			+ i*sizeof(MFT_FRAGMENT)*MFT_FRAGMENTS_COUNT);
+		fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + ((*vfs) -> mft -> size)*sizeof(MFT_ITEM) 
+			+ i*sizeof(MFT_FRAGMENT)*MFT_FRAGMENTS_COUNT, SEEK_SET);
+		fwrite((*vfs) -> mft -> items[(*vfs) -> mft -> size - 1] -> fragments[i], sizeof(MFT_FRAGMENT), 1, (*vfs) -> FILE);
+	}
+	printf("\n");
 	fflush((*vfs) -> FILE);
 }
 
