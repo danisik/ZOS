@@ -65,10 +65,21 @@ void fwrite_bitmap(VFS **vfs) {
 	fflush((*vfs) -> FILE);
 }
 
+int used_clusters(BITMAP *bitmap) {
+	int clusters_used = 0;
+	int i;
+	for (i = 0; i < bitmap -> length; i++) {
+		if (bitmap -> data[i] == 1) clusters_used++;
+	}
+
+	return clusters_used;
+}
+
 void print_bitmap(BITMAP *bitmap) {
+	int clusters_used = used_clusters(bitmap);
 	printf("\nBitmap:\n----------------\n");
 	printf("Length: %d\n", bitmap -> length);
-	printf("Clusters (0 - not used, 1 - used):");
+	printf("Clusters ((%dx) 0 - not used; (%dx) 1 - used):", bitmap -> length - clusters_used, clusters_used);
 	
 	int i;
 	for (i = 0; i < bitmap -> length; i++) {

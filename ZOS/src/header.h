@@ -117,7 +117,7 @@ void print_boot_record(BOOT_RECORD *boot_record);
 
 //mft.c
 void mft_init(VFS **vfs);
-void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size);
+int mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size);
 int mft_fragment_init(VFS **vfs, int cluster_count);
 void fread_mft(VFS **vfs, FILE *file);
 MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok);
@@ -130,6 +130,7 @@ void print_folder_content(MFT *mft, int parentID);
 int is_folder_empty(MFT *mft, int folderID);
 void fwrite_mft(VFS **vfs);
 void fwrite_mft_item(VFS **vfs);
+void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM *dest);
 void print_mft(MFT *mft);
 
 //bitmap.c
@@ -137,6 +138,7 @@ void bitmap_init(BITMAP **bitmap, int32_t cluster_count);
 void fread_bitmap(VFS **vfs, FILE *file);
 int bitmap_contains_free_cluster(BITMAP *bitmap);
 struct the_fragment_temp *find_free_cluster(BITMAP **bitmap, int needed_count);
+int used_clusters(BITMAP *bitmap);
 void fwrite_bitmap(VFS **vfs);
 void print_bitmap(BITMAP *bitmap);
 

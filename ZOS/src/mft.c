@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <linux/limits.h>
 #include "header.h"
 
 
@@ -22,11 +23,11 @@ void mft_init(VFS **vfs) {
 	
 }
 
-void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size) {
+int mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size) {
 
 	if (bitmap_contains_free_cluster((*vfs) -> bitmap) == 1) {
 		printf("Out of memory, cannot create new files\n");
-		return;
+		return 0;
 	} 
 
 	(*vfs) -> mft -> items = realloc((*vfs) -> mft -> items, ((*vfs) -> mft -> size + 1) * sizeof(MFT_ITEM));
@@ -50,7 +51,9 @@ void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory
 
 		fwrite_mft(vfs);
 		fwrite_mft_item(vfs);
+		return 1;
 	}
+	else return 0;
 }
 
 int mft_fragment_init(VFS **vfs, int cluster_count) {
@@ -153,7 +156,7 @@ MFT_ITEM *get_mft_item_from_path(VFS *vfs, char *tok) {
 	char temp_path[strlen(vfs -> actual_path -> path) + strlen(tok)];
 	strcpy(temp_path, vfs -> actual_path -> path); 
 				
-	if (tok[0] != 47) strcat(temp_path, "/");
+	if (strlen(tok) > 0 && tok[0] != 47) strcat(temp_path, "/");
 	strcat(temp_path, tok);
 	int folder_ID = find_folder_id(vfs -> mft, temp_path);		
 	item = find_mft_item_by_uid(vfs -> mft, folder_ID);
@@ -256,6 +259,27 @@ void fwrite_mft_item(VFS **vfs) {
 	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + ((*vfs) -> mft -> size - 1)*sizeof(MFT_ITEM), SEEK_SET);
 	fwrite((*vfs) -> mft -> items[(*vfs) -> mft -> size - 1], sizeof(MFT_ITEM), 1, (*vfs) -> FILE);
 	fflush((*vfs) -> FILE);
+}
+
+void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM *dest) {
+	fseek(source, 0, SEEK_END);
+	int file_size = ftell(source);
+	fseek(source, 0, SEEK_SET);
+
+	char filename[PATH_MAX];
+	char *tok = strtok(source_name, "/");
+	while(tok != NULL) {
+		strcpy(filename, tok);
+		tok = strtok(NULL, "/");
+	}
+
+	int success = mft_item_init(vfs, (*vfs) -> mft -> size, dest -> uid, filename, 0, file_size);
+
+	if (success) {
+		printf("File '%s' CREATED\n", filename);
+	}
+
+	//fwrite do datový části
 }
 
 void print_mft(MFT *mft) {

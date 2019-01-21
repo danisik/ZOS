@@ -295,7 +295,7 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
-	if (tok == NULL || strlen(tok) <= 1) {
+	if (tok == NULL || strlen(tok) <= 0) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
 	}
@@ -304,13 +304,28 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 	strcpy(source, tok);
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
-	if (tok == NULL || strlen(tok) <= 1) {
+	if (tok == NULL) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
 	}
 
-	char destination[MAX_LENGTH_OF_COMMAND];
-	strcpy(destination, tok);
+	FILE *file_src = fopen(source, "r+");
+	if (file_src == NULL) {
+		printf("FILE NOT FOUND\n");
+		return;
+	}
+
+	MFT_ITEM *dest = NULL;
+
+	if (strlen(tok) == 1) dest = (*vfs) -> mft -> items[0];
+	else dest = get_mft_item_from_path((*vfs), tok);
+
+	if (dest == NULL) {
+		printf("PATH NOT FOUND\n");
+		return;
+	}
+
+	create_file_from_FILE(vfs, file_src, source, dest);
 
 	/*
 	11) Nahraje soubor s1 z pevného disku do umístění s2 v pseudoNTFS
