@@ -266,6 +266,7 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 		tok = strtok(NULL, "/");
 	}
 
+	file_size += 1; //fixing when size is 0;
 	int success = mft_item_init(vfs, (*vfs) -> mft -> size, dest -> uid, filename, 0, file_size);
 
 	if (success) {
