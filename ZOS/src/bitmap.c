@@ -21,6 +21,7 @@ void fread_bitmap(VFS **vfs, FILE *file) {
 
 int bitmap_contains_free_cluster(BITMAP *bitmap) {
 	int i;
+	
 	for (i = 0; i < bitmap -> length; i++) {
 		if (bitmap -> data[i] == 0) {
 			return 0;
@@ -29,16 +30,33 @@ int bitmap_contains_free_cluster(BITMAP *bitmap) {
 	return 1;
 }
 
-int find_free_cluster(BITMAP **bitmap) {
+struct the_fragment_temp *find_free_cluster(BITMAP **bitmap, int needed_count) {
+	struct the_fragment_temp *temp = calloc(1, sizeof(struct the_fragment_temp));
+	temp -> start_cluster_ID = -1;
+	temp -> count = 0;
+	temp -> successful = 0;	
 	int i;
+	int count = 0;
 	for (i = 0; i < (*bitmap) -> length; i++) {
 		if ((*bitmap) -> data[i] == 0) {
-			(*bitmap) -> data[i] = 1;
-			return i;
+			if (count == 0) temp -> start_cluster_ID = i;
+			(*bitmap) -> data[i] = 1;			
+			count++;		
+			temp -> count = count;			
+
+			if (count == needed_count) {
+				temp -> successful = 1;
+				return temp;
+			}
+		}
+		else {
+			if (count > 0) {
+				temp -> successful = 0;
+				return temp;
+			}
 		}
 	}
-
-	return -1;
+	return temp;
 }
 
 void fwrite_bitmap(VFS **vfs) {

@@ -15,7 +15,7 @@ void mft_init(VFS **vfs) {
 	
 	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "test", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "tete", 1, DIRECTORY_SIZE);
-	mft_item_init(vfs, (*vfs) -> mft -> size, 1, "test2", 1, DIRECTORY_SIZE);
+	mft_item_init(vfs, (*vfs) -> mft -> size, 1, "test2", 1, 9000);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "tete2", 1, DIRECTORY_SIZE);
 	mft_item_init(vfs, (*vfs) -> mft -> size, 3, "test3", 1, DIRECTORY_SIZE);
 	
@@ -38,7 +38,11 @@ void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_order_total = 1;              
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_size = item_size;        
 	strcpy((*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_name, name);
-	mft_fragment_init(vfs, &((*vfs) -> mft -> items[(*vfs) -> mft -> size]));	
+	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments_created = 0;
+
+	int cluster_count = item_size / CLUSTER_SIZE;
+	if ((item_size % CLUSTER_SIZE) != 0) cluster_count++;
+	mft_fragment_init(vfs, cluster_count);	
 
 	(*vfs) -> mft -> size++;
 
@@ -46,12 +50,33 @@ void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory
 	fwrite_mft_item(vfs);
 }
 
-void mft_fragment_init(VFS **vfs, MFT_ITEM **item) {
-	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments -> fragment_start_address = (*vfs) -> boot_record -> mft_start_address + ((*vfs) -> mft -> size * sizeof(MFT_ITEM));
-	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments -> fragment_count = 1;   
-
-	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments -> cluster_ID = find_free_cluster(&(*vfs) -> bitmap);
+void mft_fragment_init(VFS **vfs, int cluster_count) {
+	int i = 0;	
+	int already_setted = 0;
+	while(1) {
+		(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] = calloc(1, sizeof(MFT_FRAGMENT));
+		struct the_fragment_temp *temp = find_free_cluster(&(*vfs) -> bitmap, cluster_count - already_setted);	
+		if (temp -> start_cluster_ID == -1 && temp -> count == 0 && temp -> successful == 0) break;
+		already_setted += temp -> count;
 	
+		(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] -> fragment_count = temp -> count;
+		(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] -> start_cluster_ID = temp -> start_cluster_ID;
+		(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments[i] -> fragment_start_address = (*vfs) -> boot_record -> data_start_address + 1 + temp -> start_cluster_ID * CLUSTER_SIZE;
+
+		(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments_created++;
+		if (temp -> successful == 1) break; 
+
+		i++;
+	}
+
+	if (cluster_count != already_setted) {
+		//TODO kontrola zda jsme obsadili všechny potřebné clustery, pokud ne, vyhodit out of memory			
+		//free vytvořený item
+		printf("smazat item");
+	}
+
+	//TODO fwrite fragmenty ??
+
 	fwrite_bitmap(vfs);
 }
 
@@ -119,7 +144,8 @@ void remove_directory(VFS **vfs, int uid) {
 	for (i = 0; i < (*vfs) -> mft -> size; i++) {
 		if ((*vfs) -> mft -> items[i] -> uid == uid) {	
 
-			(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> fragments -> cluster_ID] = 0;
+			//TODO upravit fragmenty
+			//(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> fragments -> start_cluster_ID] = 0;
 			(*vfs) -> mft -> items[i] = (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1];
 			(*vfs) -> mft -> items = realloc((*vfs) -> mft -> items, ((*vfs) -> mft -> size - 1) * sizeof(MFT_ITEM));
 			(*vfs) -> mft -> size--;

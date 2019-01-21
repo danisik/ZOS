@@ -1,5 +1,5 @@
 #define UID_ITEM_FREE 0
-#define MFT_FRAGMENTS_COUNT 1
+#define MFT_FRAGMENTS_COUNT 4 //TODO
 #define VFS_FILENAME_LENGTH 12
 #define DISK_SIZE 102400 //10 KB 
 #define CLUSTER_SIZE 4096
@@ -32,6 +32,7 @@
 #define HELP "help"
 
 
+typedef struct the_fragmet_temp FRAGMENT_TEMP;
 typedef struct the_bitmap BITMAP;
 typedef struct the_mft_fragment MFT_FRAGMENT;
 typedef struct the_mft_item MFT_ITEM;
@@ -39,6 +40,12 @@ typedef struct the_mft MFT;
 typedef struct the_boot_record BOOT_RECORD;
 typedef struct the_path PATH;
 typedef struct the_vfs VFS;
+
+struct the_fragment_temp {
+	int successful;
+	int32_t start_cluster_ID;
+	int count;
+};
 
 struct the_bitmap {
 	int32_t length;
@@ -48,7 +55,7 @@ struct the_bitmap {
 struct the_mft_fragment {
 	int32_t fragment_start_address;     //start adresa
 	int32_t fragment_count;             //pocet clusteru ve fragmentu
-	int32_t cluster_ID;
+	int32_t start_cluster_ID;
 };
 
 struct the_mft_item {
@@ -59,7 +66,8 @@ struct the_mft_item {
 	int8_t item_order_total;                            //celkovy pocet polozek v MFT, jinak 1
 	char item_name[12];                                 //8+3 + /0 C/C++ ukoncovaci string znak
 	int32_t item_size;                                  //velikost souboru v bytech
-	MFT_FRAGMENT fragments[MFT_FRAGMENTS_COUNT]; 	    //fragmenty souboru
+	MFT_FRAGMENT *fragments[MFT_FRAGMENTS_COUNT]; 	    //fragmenty souboru
+	int fragments_created;
 };
 
 struct the_mft {
@@ -113,7 +121,7 @@ void print_boot_record(BOOT_RECORD *boot_record);
 //mft.c
 void mft_init(VFS **vfs);
 void mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size);
-void mft_fragment_init(VFS **vfs, MFT_ITEM **item);
+void mft_fragment_init(VFS **vfs, int cluster_count);
 void fread_mft(VFS **vfs, FILE *file);
 MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok);
 MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid);
@@ -131,7 +139,7 @@ void print_mft(MFT *mft);
 void bitmap_init(BITMAP **bitmap, int32_t cluster_count);
 void fread_bitmap(VFS **vfs, FILE *file);
 int bitmap_contains_free_cluster(BITMAP *bitmap);
-int find_free_cluster(BITMAP **bitmap);
+struct the_fragment_temp *find_free_cluster(BITMAP **bitmap, int needed_count);
 void fwrite_bitmap(VFS **vfs);
 void print_bitmap(BITMAP *bitmap);
 

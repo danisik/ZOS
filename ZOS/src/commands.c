@@ -288,8 +288,12 @@ void mft_item_info(VFS *vfs, char *tok) {
 	printf("UID: %d\n", item -> uid);
 	printf("PUID: %d\n", item -> parentID);
 	printf("SIZE: %d\n", item -> item_size);
-	printf("FRAGMENTS: Location - %d; Count - %d\n", item -> fragments -> fragment_start_address, item -> fragments -> fragment_count);
-	printf("CLUSTERS: ID - %d\n", item -> fragments -> cluster_ID);
+	printf("FRAGMENTS: Count - %d\n", item -> fragments_created);	
+	int i;
+	for (i = 0; i < item -> fragments_created; i++) {	
+		printf("FRAGMENT %d: Location - %d;\n", i, item -> fragments[i] -> fragment_start_address);
+		printf("	CLUSTERS: START_ID - %d; Count - %d\n", item -> fragments[i] -> start_cluster_ID, item -> fragments[i] -> fragment_count);
+	}
 }
 
 void hd_to_pseudo(VFS **vfs, char *tok) {
