@@ -292,6 +292,7 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 		for (j = 0; j < item -> fragment_count[i]; j++) {
 			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
 			fwrite(buffer[i+j],CLUSTER_SIZE, 1, (*vfs) -> FILE); 
+			fflush((*vfs) -> FILE);
 		}
 	}
 }

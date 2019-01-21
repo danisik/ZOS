@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 			print_directory(vfs, tok);
 		}
 		else if (compare_two_string(tok, PRINT_FILE) == 0) {
-			print_file(vfs, tok); //not implemented
+			print_file(vfs, tok);
 		}
 		else if (compare_two_string(tok, MOVE_TO_DIRECTORY) == 0) {
 			move_to_directory(&vfs, tok);

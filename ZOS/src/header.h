@@ -167,4 +167,5 @@ int compare_two_string(char *string1, char *string2);
 int array_length_strtok(char *path);
 int index_of_last_digit(char *size);
 int get_multiple(char *multiple, int size);
+int directory_exists(char *path);
 int my_atoi(const char* snum);

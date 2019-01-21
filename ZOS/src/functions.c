@@ -5,6 +5,11 @@
 #include "header.h"
 #include <ctype.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <error.h>
+#include <errno.h>
 
 //1 - not same
 //0 - same
@@ -81,6 +86,27 @@ int get_multiple(char *multiple, int size) {
 	}
 
 	return multiple_number;
+}
+
+int directory_exists(char *path) {
+
+	struct stat s;
+	int err = stat(path, &s);
+	if(-1 == err) {
+		if(ENOENT == errno) {
+			return 0;
+		}
+		else return 0;
+	} 
+	else {
+		if(S_ISDIR(s.st_mode)) {
+			return 1;
+		} 
+		else {
+			return 0;	
+		}
+	}
+	return 0;
 }
 
 int my_atoi(const char* snum) {

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <linux/limits.h>
-#include "header.h"
+#include "header.h" 
 
 void copy_file(VFS **vfs, char *tok) {
 
@@ -228,14 +228,6 @@ void print_file(VFS *vfs, char *tok) {
 		}
 	}
 	else printf("FILE NOT FOUND\n");
-
-	/*
-	7) Vypíše obsah souboru s1
-	cat s1
-	Možný výsledek:
-	OBSAH
-	FILE NOT FOUND (není zdroj)
-	*/
 }
 
 void move_to_directory(VFS **vfs, char *tok) {
@@ -361,26 +353,56 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 }
 
 void pseudo_to_hd(VFS **vfs, char *tok) {
-
+	char source[PATH_MAX];
+	char dest[PATH_MAX];
+	
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
-
 	if (tok == NULL || strlen(tok) <= 1) {
 		printf("SOURCE NOT DEFINED\n");
 		return;
 	}
-
-	char source[MAX_LENGTH_OF_COMMAND];
 	strcpy(source, tok);
 
-	tok = strtok(NULL, SPLIT_ARGS_CHAR);
+	tok = strtok(NULL, SPLIT_ARGS_CHAR);	
 
-	if (tok == NULL || strlen(tok) <= 1) {
-		printf("DESTINATION NOT DEFINED\n");
+	MFT_ITEM *item_source = NULL;
+	//46 - tečka
+	if (tok[0] == 46) item_source = (*vfs) -> mft -> items[0];
+	else item_source = get_mft_item_from_path((*vfs), source);
+
+	if (item_source == NULL) {
+		printf("FILE NOT FOUND\n");
 		return;
 	}
 
-	char destination[MAX_LENGTH_OF_COMMAND];
-	strcpy(destination, tok);
+	if (item_source -> isDirectory) {
+		printf("Can't outcp directory!\n");
+		return;
+	}
+
+	if (tok == NULL) {
+		printf("DESTINATION NOT DEFINED\n");
+		return;
+	}
+	strcpy(dest, tok);
+
+	if (strlen(dest) > 0 && dest[strlen(dest) - 1] == '\n') dest[strlen(dest) - 1] = '\0';	
+
+	char full_path[PATH_MAX];
+	strcpy(full_path, dest);
+	if(strlen(dest) > 0) strcat(full_path, "/");
+	strcat(full_path, item_source -> item_name);
+
+	if (strlen(dest) == 0 || directory_exists(dest)) {
+		FILE *file_dest = fopen(full_path, "wb");
+		fseek(file_dest, 0, SEEK_SET);
+		//TODO write content of item to file
+		fflush(file_dest);
+	}
+	else {
+		printf("PATH NOT FOUND\n");
+		return;
+	}
 
 	/*
 	12) Nahraje soubor s1 z pseudoNTFS do umístění s2 na pevném disku
