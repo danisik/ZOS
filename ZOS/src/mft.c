@@ -42,8 +42,11 @@ int mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory,
 	strcpy((*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_name, name);
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments_created = 0;
 
-	int cluster_count = item_size / CLUSTER_SIZE;
-	if ((item_size % CLUSTER_SIZE) != 0) cluster_count++;
+	int cluster_count = 1;
+	if (item_size != 0) {
+		cluster_count = item_size / CLUSTER_SIZE;
+		if ((item_size % CLUSTER_SIZE) != 0) cluster_count++;
+	}
 	int success = mft_fragment_init(vfs, cluster_count);		
 
 	if (success) {
@@ -117,25 +120,6 @@ void fread_mft(VFS **vfs, FILE *file) {
 		fseek(file, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + i*sizeof(MFT_ITEM), SEEK_SET);
 		fread((*vfs) -> mft -> items[i], sizeof(MFT_ITEM), 1, file); 
 	}
-}
-
-MFT_ITEM *find_mft_item_by_name(MFT *mft, char *tok) {
-
-	int a = 0;
-	while(tok[a] != '\n' && tok[a] != '\0' && tok[a] != 47) {
-		a++;
-	}
-	char compare[a];
-	strncpy(compare, tok, a);
-
-	int i;
-	for (i = 0; i < mft -> size; i++) {
-		if (strcmp(compare, mft -> items[i] -> item_name) == 0) {
-			return mft -> items[i];
-		}			
-	}
-
-	return NULL;
 }
 
 MFT_ITEM *find_mft_item_by_uid(MFT *mft, int uid) {
@@ -254,6 +238,16 @@ void fwrite_mft_item(VFS **vfs) {
 	fflush((*vfs) -> FILE);
 }
 
+int check_if_folder_contains_item(MFT *mft, MFT_ITEM *folder, char *item_name) {
+	int i;
+	for (i = 0; i < mft -> size; i++) {
+		if (!compare_two_string(mft -> items[i] -> item_name, item_name)) {
+			if (mft -> items[i] -> parentID == folder -> uid) return 1;
+		} 
+	}
+	return 0;
+}
+
 void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM *dest) {
 	fseek(source, 0, SEEK_END);
 	int file_size = ftell(source);
@@ -266,7 +260,11 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 		tok = strtok(NULL, "/");
 	}
 
-	file_size += 1; //fixing when size is 0;
+	if (check_if_folder_contains_item((*vfs) -> mft, dest, filename)) {
+		printf("File or directory already exists with name '%s'\n", filename);
+		return;
+	}
+
 	int success = mft_item_init(vfs, (*vfs) -> mft -> size, dest -> uid, filename, 0, file_size);
 
 	if (success) {
@@ -275,13 +273,16 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 
 	int i, j;
 
-	int file_part = file_size / CLUSTER_SIZE;
-	if (file_size % CLUSTER_SIZE != 0) file_part++;
+	int file_part = 1;
+	if (file_size != 0) {
+		file_part = file_size / CLUSTER_SIZE;
+		if (file_size % CLUSTER_SIZE != 0) file_part++;
+	}
 
 	int read_size = CLUSTER_SIZE;
 	char buffer[file_part][read_size];
 	
-	MFT_ITEM *item = find_mft_item_by_name((*vfs) -> mft, filename);
+	MFT_ITEM *item = find_mft_item_by_uid((*vfs) -> mft, (*vfs) -> mft -> size - 1);
 
 	for (i = 0; i < file_part; i++) {
 		fseek(source, i * read_size, SEEK_SET);
@@ -299,6 +300,11 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 }
 
 void print_file_content(VFS *vfs, MFT_ITEM *item) {
+
+	if (item -> item_size == 0) {
+		printf("\n");
+		return;
+	}
 	int file_part = item -> item_size / CLUSTER_SIZE;
 	if (item -> item_size % CLUSTER_SIZE != 0) file_part++;
 

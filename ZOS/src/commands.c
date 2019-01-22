@@ -342,7 +342,7 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 	MFT_ITEM *dest = NULL;
 
 	if (strlen(tok) == 1) dest = (*vfs) -> mft -> items[0];
-	else dest = get_mft_item_from_path((*vfs), tok);
+	else dest = get_mft_item_from_path((*vfs), tok);	 
 
 	if (dest == NULL) {
 		printf("PATH NOT FOUND\n");
@@ -365,10 +365,7 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);	
 
-	MFT_ITEM *item_source = NULL;
-	//46 - tečka
-	if (tok[0] == 46) item_source = (*vfs) -> mft -> items[0];
-	else item_source = get_mft_item_from_path((*vfs), source);
+	MFT_ITEM *item_source = get_mft_item_from_path((*vfs), source);
 
 	if (item_source == NULL) {
 		printf("FILE NOT FOUND\n");
