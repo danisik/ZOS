@@ -133,6 +133,7 @@ int check_if_folder_contains_item(MFT *mft, MFT_ITEM *folder, char *item_name);
 void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM *dest);
 void remove_given_file(VFS **vfs, MFT_ITEM *file);
 void print_file_content(VFS *vfs, MFT_ITEM *item);
+void copy_given_file(VFS **vfs, MFT_ITEM *dest_folder, MFT_ITEM *file, char *destination);
 void print_mft(MFT *mft);
 
 //bitmap.c

@@ -18,13 +18,46 @@ void copy_file(VFS **vfs, char *tok) {
 
 	tok = strtok(NULL, SPLIT_ARGS_CHAR);
 
-	if (tok == NULL || strlen(tok) <= 1) {
+	if (tok == NULL) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
 	}
 
+	MFT_ITEM *dest_folder = NULL;
+
+	if (strlen(tok) == 1) dest_folder = (*vfs) -> mft -> items[0];
+	else dest_folder = get_mft_item_from_path((*vfs), tok);
+
 	char destination[MAX_LENGTH_OF_COMMAND];
 	strcpy(destination, tok);
+
+	MFT_ITEM *moved_file = get_mft_item_from_path((*vfs), source);
+
+	if (moved_file == NULL) {
+		printf("FILE NOT FOUND\n");
+		return;
+	}
+	else if (moved_file -> isDirectory) {
+		printf("Moved file is DIRECTORY!\n");
+		return;
+	}
+	
+	if (dest_folder == NULL) {
+		printf("PATH NOT FOUND\n");
+		return;
+	}
+	else if (!dest_folder -> isDirectory) {
+		printf("Destination directory is FILE!\n");
+		return;
+	}
+
+	
+	if (check_if_folder_contains_item((*vfs) -> mft, dest_folder, moved_file -> item_name)) {
+		printf("Directory '%s' already contains file/directory with name '%s'\n", dest_folder -> item_name, moved_file -> item_name);
+		return;	
+	}
+
+	copy_given_file(vfs, dest_folder, moved_file, destination);
 
 	/*
 	1) Zkopíruje soubor s1 do umístění s2
@@ -448,7 +481,7 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 		}
 		fflush(file_dest);
 		fclose(file_dest);
-		printf("File '%s' SUCCESSFULLY COPIED\n", item_source -> item_name);
+		printf("File '%s' SUCCESSFULLY COPIED INTO HD\n", item_source -> item_name);
 	}
 	else {
 		printf("PATH NOT FOUND\n");

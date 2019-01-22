@@ -347,6 +347,40 @@ void print_file_content(VFS *vfs, MFT_ITEM *item) {
 	printf("\n");
 }
 
+void copy_given_file(VFS **vfs, MFT_ITEM *dest_folder, MFT_ITEM *file, char *destination) {
+	int success = mft_item_init(vfs, (*vfs) -> mft -> size, dest_folder -> uid, file -> item_name, 0, file -> item_size);
+	
+	MFT_ITEM *copied_file = find_mft_item_by_uid((*vfs) -> mft, (*vfs) -> mft -> size - 1);
+	if (success) {
+		if (file -> item_size > 0) {
+			int i, j;
+			int position = 0;
+			char buffer[CLUSTER_SIZE];
+			int32_t actual_size = file -> item_size;
+			for (i = 0; i < file -> fragments_created; i++) {
+				for (j = 0; j < file -> fragment_count[i]; j++) {
+					fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(file -> start_cluster_ID[i] + j), SEEK_SET); 
+					fread(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE);	
+
+					fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(copied_file -> start_cluster_ID[i] + j), SEEK_SET); 
+					position++; 
+					if (actual_size >= CLUSTER_SIZE) {
+						actual_size -= CLUSTER_SIZE;
+						fwrite(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE); 
+					}
+					else {
+						fwrite(buffer, actual_size, 1, (*vfs) -> FILE); 
+						break;
+					}
+					fflush((*vfs) -> FILE);
+				}
+			}
+		}
+		fflush((*vfs) -> FILE);		
+		printf("File '%s' copied into destination '%s'\n", file -> item_name, destination);
+	}
+}
+
 void print_mft(MFT *mft) {
 	printf("\nMFT:\n----------------\n");
 	printf("Items count: %d\n", mft -> size);
