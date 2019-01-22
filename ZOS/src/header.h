@@ -58,7 +58,7 @@ struct the_mft_item {
 	int8_t item_order;                                 	 //poradi v MFT pri vice souborech, jinak 1
 	int8_t item_order_total;                           	 //celkovy pocet polozek v MFT, jinak 1
 	char item_name[12];                                	 //8+3 + /0 C/C++ ukoncovaci string znak
-	int32_t item_size;                                  	//velikost souboru v bytech
+	long item_size;                                  	//velikost souboru v bytech
 
 	//fragments
 	int32_t fragment_start_address[MFT_FRAGMENTS_COUNT];	//start adresa

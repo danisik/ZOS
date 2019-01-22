@@ -24,7 +24,6 @@ void mft_init(VFS **vfs) {
 }
 
 int mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size) {
-
 	if (bitmap_contains_free_cluster((*vfs) -> bitmap) == 1) {
 		printf("Out of memory, cannot create new files\n");
 		return 0;
@@ -41,14 +40,12 @@ int mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory,
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_size = item_size;        
 	strcpy((*vfs) -> mft -> items[(*vfs) -> mft -> size] -> item_name, name);
 	(*vfs) -> mft -> items[(*vfs) -> mft -> size] -> fragments_created = 0;
-
 	int cluster_count = 1;
 	if (item_size != 0) {
 		cluster_count = item_size / CLUSTER_SIZE;
 		if ((item_size % CLUSTER_SIZE) != 0) cluster_count++;
 	}
 	int success = mft_fragment_init(vfs, cluster_count);		
-
 	if (success) {
 		(*vfs) -> mft -> size++;
 
@@ -292,7 +289,7 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 
 	for (i = 0; i < item -> fragments_created; i++) {
 		for (j = 0; j < item -> fragment_count[i]; j++) {
-			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
+			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
 			fwrite(buffer[i+j],CLUSTER_SIZE, 1, (*vfs) -> FILE); 
 			fflush((*vfs) -> FILE);
 		}
@@ -308,13 +305,12 @@ void print_file_content(VFS *vfs, MFT_ITEM *item) {
 	int file_part = item -> item_size / CLUSTER_SIZE;
 	if (item -> item_size % CLUSTER_SIZE != 0) file_part++;
 
-	int read_size = CLUSTER_SIZE;
-	char buffer[file_part][read_size];
+	char buffer[file_part][CLUSTER_SIZE];
 
 	int i, j;
 	for (i = 0; i < item -> fragments_created; i++) {
 		for (j = 0; j < item -> fragment_count[i]; j++) {
-			fseek(vfs -> FILE, vfs -> boot_record -> mft_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
+			fseek(vfs -> FILE, vfs -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
 			fread(buffer[i+j], CLUSTER_SIZE, 1, vfs -> FILE); 
 		}
 	}

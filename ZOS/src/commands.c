@@ -306,7 +306,7 @@ void mft_item_info(VFS *vfs, char *tok) {
 	printf("NAME: %s\n", item -> item_name);
 	printf("UID: %d\n", item -> uid);
 	printf("PUID: %d\n", item -> parentID);
-	printf("SIZE: %d\n", item -> item_size);
+	printf("SIZE: %li\n", item -> item_size);
 	printf("FRAGMENTS: Count - %d\n", item -> fragments_created);	
 	int i;
 	for (i = 0; i < item -> fragments_created; i++) {	
@@ -392,9 +392,35 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 
 	if (strlen(dest) == 0 || directory_exists(dest)) {
 		FILE *file_dest = fopen(full_path, "wb");
-		fseek(file_dest, 0, SEEK_SET);
-		//TODO write content of item to file
+		
+		if (item_source -> item_size > 0) {
+			int i, j;
+			int position = 0;
+			char buffer[CLUSTER_SIZE];
+			int32_t actual_size = item_source -> item_size;
+			for (i = 0; i < item_source -> fragments_created; i++) {
+				for (j = 0; j < item_source -> fragment_count[i]; j++) {
+					fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item_source -> start_cluster_ID[i] + j), SEEK_SET); 
+					fread(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE);	
+
+					fseek(file_dest, position * CLUSTER_SIZE, SEEK_SET);
+					position++; 
+					if (actual_size >= CLUSTER_SIZE) {
+						actual_size -= CLUSTER_SIZE;
+						fwrite(buffer, CLUSTER_SIZE, 1, file_dest); 
+					}
+					else {
+						fwrite(buffer, actual_size - 1, 1, file_dest); 
+						fflush(file_dest);
+						fputc(0x0a, file_dest); //LF
+						break;
+					}
+					fflush(file_dest);
+				}
+			}
+		}
 		fflush(file_dest);
+		fclose(file_dest);
 	}
 	else {
 		printf("PATH NOT FOUND\n");
