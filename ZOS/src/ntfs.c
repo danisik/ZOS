@@ -54,10 +54,10 @@ int main(int argc, char *argv[]) {
 			copy_file(&vfs, tok); //not implemented
 		}
 		else if (compare_two_string(tok, MOVE_FILE) == 0) {
-			move_file(&vfs, tok); //not implemented
+			move_file(&vfs, tok);
 		}
 		else if (compare_two_string(tok, REMOVE_FILE) == 0) {
-			remove_file(&vfs, tok); //not implemented 
+			remove_file(&vfs, tok);
 		}
 		else if (compare_two_string(tok, MAKE_DIRECTORY) == 0) {
 			make_directory(&vfs, tok);

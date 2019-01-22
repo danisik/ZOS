@@ -96,7 +96,7 @@ int mft_fragment_init(VFS **vfs, int cluster_count) {
 			remove_directory(vfs, (*vfs) -> mft -> items[(*vfs) -> mft -> size] -> uid);
 		}
 		else {
-			//TODO remove_file
+			remove_given_file(vfs, (*vfs) -> mft -> items[(*vfs) -> mft -> size]);
 		}		
 		return 0;
 	}
@@ -292,6 +292,32 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
 			fwrite(buffer[i+j],CLUSTER_SIZE, 1, (*vfs) -> FILE); 
 			fflush((*vfs) -> FILE);
+		}
+	}
+}
+
+void remove_given_file(VFS **vfs, MFT_ITEM *file) {
+	int i, j, k;
+	for (i = 0; i < (*vfs) -> mft -> size; i++) {
+		if ((*vfs) -> mft -> items[i] -> uid == file -> uid) {	
+			(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> start_cluster_ID[0]] = 0; 
+
+			for (j = 0; j < (*vfs) -> mft -> items[i] -> fragments_created; j++) {
+				for (k = 0; k < (*vfs) -> mft -> items[i] -> fragment_count[j]; k++) {
+					(*vfs) -> bitmap -> data[(*vfs) -> mft -> items[i] -> start_cluster_ID[j] + k] = 0;
+				}
+			}
+
+			if (((*vfs) -> mft -> size - 1) > 0) (*vfs) -> mft -> items[i] = (*vfs) -> mft -> items[(*vfs) -> mft -> size - 1];
+			(*vfs) -> mft -> items[i] -> uid = file -> uid;
+			(*vfs) -> mft -> items = realloc((*vfs) -> mft -> items, ((*vfs) -> mft -> size - 1) * sizeof(MFT_ITEM));
+			(*vfs) -> mft -> size--;
+
+
+			fwrite_mft(vfs);
+			fwrite_mft_item(vfs);
+			fwrite_bitmap(vfs);
+			return;
 		}
 	}
 }

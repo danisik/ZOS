@@ -98,13 +98,19 @@ void remove_file(VFS **vfs, char *tok) {
 		return;
 	}
 
-	/*
-	3) Smaže soubor s1
-	rm s1
-	Možný výsledek:
-	OK
-	FILE NOT FOUND
-	*/
+	MFT_ITEM *removed_file = get_mft_item_from_path((*vfs), tok);
+
+	if (removed_file == NULL) {
+		printf("FILE NOT FOUND\n");
+		return;
+	}
+	else if (removed_file -> isDirectory) {
+		printf("Moved file is DIRECTORY!\n");
+		return;
+	}
+
+	printf("File '%s' was successfully removed\n", removed_file -> item_name); 
+	remove_given_file(vfs, removed_file);
 }
 
 void make_directory(VFS **vfs, char *tok) {
