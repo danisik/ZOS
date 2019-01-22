@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 		tok = strtok(command, SPLIT_ARGS_CHAR);
 	
 		if (compare_two_string(tok, COPY_FILE) == 0) {
-			copy_file(&vfs, tok); //not implemented
+			copy_file(&vfs, tok);
 		}
 		else if (compare_two_string(tok, MOVE_FILE) == 0) {
 			move_file(&vfs, tok);
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 			file_formatting(&vfs, tok);
 		}
 		else if (compare_two_string(tok, DEFRAG) == 0) {
-			defrag(); //not implemented
+			defrag(&vfs); //not implemented
 		}
 		else if (compare_two_string(tok, HELP) == 0) {
 			commands_help();

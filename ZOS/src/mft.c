@@ -11,16 +11,6 @@ void mft_init(VFS **vfs) {
 	(*vfs) -> mft -> items = calloc((*vfs) -> mft -> size, sizeof(MFT_ITEM));
 
 	mft_item_init(vfs, (*vfs) -> mft -> size, -1, ROOT_NAME, 1, DIRECTORY_SIZE);
-
-	//TODO smazat ve výsledném programu, pouze pro testovací účely
-	
-	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "tete", 1, DIRECTORY_SIZE);
-	mft_item_init(vfs, (*vfs) -> mft -> size, 0, "test", 1, DIRECTORY_SIZE);
-	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "tete2", 1, DIRECTORY_SIZE);
-	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "test3", 1, DIRECTORY_SIZE);
-			remove_directory(vfs, 1);
-	mft_item_init(vfs, (*vfs) -> mft -> size, 2, "test2", 1, 9000);
-	
 }
 
 int mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory, int item_size) {
@@ -50,7 +40,7 @@ int mft_item_init(VFS **vfs, int uid, int parentID, char *name, int isDirectory,
 		(*vfs) -> mft -> size++;
 
 		fwrite_mft(vfs);
-		fwrite_mft_item(vfs);
+		fwrite_mft_item(vfs, uid);
 		return 1;
 	}
 	else return 0;
@@ -156,7 +146,7 @@ void remove_directory(VFS **vfs, int uid) {
 
 
 			fwrite_mft(vfs);
-			fwrite_mft_item(vfs);
+			fwrite_mft_item(vfs, uid);
 			fwrite_bitmap(vfs);
 			return;
 		}
@@ -229,9 +219,9 @@ void fwrite_mft(VFS **vfs) {
 	fflush((*vfs) -> FILE);
 }
 
-void fwrite_mft_item(VFS **vfs) {
-	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + ((*vfs) -> mft -> size - 1)*sizeof(MFT_ITEM), SEEK_SET);
-	fwrite((*vfs) -> mft -> items[(*vfs) -> mft -> size - 1], sizeof(MFT_ITEM), 1, (*vfs) -> FILE);
+void fwrite_mft_item(VFS **vfs, int uid) {
+	fseek((*vfs) -> FILE, (*vfs) -> boot_record -> mft_start_address + sizeof(MFT) + 1 + uid*sizeof(MFT_ITEM), SEEK_SET);
+	fwrite((*vfs) -> mft -> items[uid], sizeof(MFT_ITEM), 1, (*vfs) -> FILE);
 	fflush((*vfs) -> FILE);
 }
 
@@ -315,7 +305,7 @@ void remove_given_file(VFS **vfs, MFT_ITEM *file) {
 
 
 			fwrite_mft(vfs);
-			fwrite_mft_item(vfs);
+			fwrite_mft_item(vfs, file -> uid);
 			fwrite_bitmap(vfs);
 			return;
 		}
@@ -331,18 +321,27 @@ void print_file_content(VFS *vfs, MFT_ITEM *item) {
 	int file_part = item -> item_size / CLUSTER_SIZE;
 	if (item -> item_size % CLUSTER_SIZE != 0) file_part++;
 
-	char buffer[file_part][CLUSTER_SIZE];
+	char buffer[CLUSTER_SIZE];
 
 	int i, j;
+	int actual_size = item -> item_size;
 	for (i = 0; i < item -> fragments_created; i++) {
 		for (j = 0; j < item -> fragment_count[i]; j++) {
 			fseek(vfs -> FILE, vfs -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
-			fread(buffer[i+j], CLUSTER_SIZE, 1, vfs -> FILE); 
+			if (actual_size >= CLUSTER_SIZE) { 
+				fread(buffer, CLUSTER_SIZE, 1, vfs -> FILE); 
+				printf("%s", buffer);
+				actual_size -= CLUSTER_SIZE;
+			}
+			else {
+				fread(buffer, actual_size, 1, vfs -> FILE);
+				int k;
+				for (k = 0; k < actual_size; k++) {							
+					printf("%c", buffer[k]);
+				}
+				break;
+			}
 		}
-	}
-
-	for (i = 0; i < file_part; i++) {
-		printf("%s", buffer[i]);
 	}
 	printf("\n");
 }
@@ -354,16 +353,14 @@ void copy_given_file(VFS **vfs, MFT_ITEM *dest_folder, MFT_ITEM *file, char *des
 	if (success) {
 		if (file -> item_size > 0) {
 			int i, j;
-			int position = 0;
 			char buffer[CLUSTER_SIZE];
-			int32_t actual_size = file -> item_size;
+			long actual_size = file -> item_size;
 			for (i = 0; i < file -> fragments_created; i++) {
 				for (j = 0; j < file -> fragment_count[i]; j++) {
 					fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(file -> start_cluster_ID[i] + j), SEEK_SET); 
 					fread(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE);	
 
 					fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(copied_file -> start_cluster_ID[i] + j), SEEK_SET); 
-					position++; 
 					if (actual_size >= CLUSTER_SIZE) {
 						actual_size -= CLUSTER_SIZE;
 						fwrite(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE); 
@@ -379,6 +376,85 @@ void copy_given_file(VFS **vfs, MFT_ITEM *dest_folder, MFT_ITEM *file, char *des
 		fflush((*vfs) -> FILE);		
 		printf("File '%s' copied into destination '%s'\n", file -> item_name, destination);
 	}
+}
+
+void defrag_copy_data_temp_file(VFS **vfs) {
+	int i, j, k;
+	FILE *temp_data_file = fopen(TEMP_DATA_FILENAME, "wb");
+	
+	char buffer[CLUSTER_SIZE];
+	long actual_size = 0;
+
+	for (i = 0; i < (*vfs) -> mft -> size; i++) {
+		actual_size = (*vfs) -> mft -> items[i] -> item_size;
+		if (!(*vfs) -> mft -> items[i] -> isDirectory) {
+			for (j = 0; j < (*vfs) -> mft -> items[i] -> fragments_created; j++) {
+				for (k = 0; k < (*vfs) -> mft -> items[i] -> fragment_count[j]; k++) {
+					fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*((*vfs) -> mft -> items[i] -> start_cluster_ID[j] + k), SEEK_SET); 
+					fread(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE);	
+
+					fseek(temp_data_file, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*((*vfs) -> mft -> items[i] -> start_cluster_ID[j] + k), SEEK_SET); 
+					if (actual_size >= CLUSTER_SIZE) {
+						actual_size -= CLUSTER_SIZE;
+						fwrite(buffer, CLUSTER_SIZE, 1, temp_data_file); 
+					}
+					else {
+						fwrite(buffer, actual_size, 1, temp_data_file); 
+						break;
+					}
+					fflush(temp_data_file);
+				}
+			}
+		}
+	}
+	fflush(temp_data_file);
+	printf("Data copied successfully into temporary data file '%s'\n", TEMP_DATA_FILENAME);
+}
+
+void defrag_init_mft_items(VFS **vfs) {
+	int i, size = (*vfs) -> mft -> size;
+
+	(*vfs) -> mft -> size = 0;
+
+	mft_item_init(vfs, (*vfs) -> mft -> size, -1, ROOT_NAME, 1, DIRECTORY_SIZE);
+
+	for (i = 1; i < size; i++) {
+		if ((*vfs) -> mft -> items[i] -> isDirectory) {
+			mft_item_init(vfs, (*vfs) -> mft -> size, (*vfs) -> mft -> items[i] -> parentID, (*vfs) -> mft -> items[i] -> item_name, 1, DIRECTORY_SIZE);
+		}
+		else {
+			mft_item_init(vfs, (*vfs) -> mft -> size, (*vfs) -> mft -> items[i] -> parentID, (*vfs) -> mft -> items[i] -> item_name, 0, (*vfs) -> mft -> items[i] -> item_size);
+			defrag_copy_data_back_from_temp_file(vfs, find_mft_item_by_uid((*vfs) -> mft, (*vfs) -> mft -> size - 1));
+		}
+	}
+	printf("MFT Items fragments successfully initialized\n");
+}
+
+void defrag_copy_data_back_from_temp_file(VFS **vfs, MFT_ITEM *item) {
+	int i, j;
+	FILE *temp_data_file = fopen(TEMP_DATA_FILENAME, "wb");
+	
+	char buffer[CLUSTER_SIZE];
+	long actual_size = 0;
+
+	for (i = 0; i < item -> fragments_created; i++) {
+		for (j = 0; j < item -> fragment_count[i]; j++) {
+			fseek(temp_data_file, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET); 
+			fread(buffer, CLUSTER_SIZE, 1, temp_data_file);	
+
+			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET); 
+			if (actual_size >= CLUSTER_SIZE) {
+				actual_size -= CLUSTER_SIZE;
+				fwrite(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE); 
+			}
+			else {
+				fwrite(buffer, actual_size, 1, (*vfs) -> FILE); 
+				break;
+			}
+			fflush((*vfs) -> FILE);
+		}
+	}
+	fflush((*vfs) -> FILE);
 }
 
 void print_mft(MFT *mft) {

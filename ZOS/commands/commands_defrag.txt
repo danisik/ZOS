@@ -1,0 +1,22 @@
+mkdir aa
+mkdir a
+cd a
+mkdir b
+cd b
+mkdir c
+finfo
+cd
+rmdir aa
+incp files/filedlouhy.txt a/b/c
+finfo
+info a
+info a/b
+info a/b/c
+info a/b/c/filedlouhy.txt
+defrag
+finfo
+info a
+info a/b
+info a/b/c
+info a/b/c/filedlouhy.txt
+quit

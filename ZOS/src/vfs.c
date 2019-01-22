@@ -21,7 +21,7 @@ void vfs_init(VFS **vfs, char *filename, size_t disk_size, int formatting) {
 	path_init(vfs);
 
 	FILE *test_if_exists = fopen(filename, "r+");
-	//if (test_if_exists == NULL || formatting == 1) {
+	if (test_if_exists == NULL || formatting == 1) {
 		(*vfs) -> FILE = fopen((*vfs) -> filename, "wb");
 		if (formatting == 0) printf("Data file with name %s not found, creating new\n", filename);
 
@@ -36,7 +36,7 @@ void vfs_init(VFS **vfs, char *filename, size_t disk_size, int formatting) {
 		mft_init(vfs);
 
 		create_vfs_file(vfs);
-	/*}
+	}
 	else {
 		printf("Data file with name %s found, filling structures\n", filename);
 		fread_boot_record(vfs, test_if_exists);
@@ -44,7 +44,7 @@ void vfs_init(VFS **vfs, char *filename, size_t disk_size, int formatting) {
 		fread_bitmap(vfs, test_if_exists);
 		fclose(test_if_exists);
 		(*vfs) -> FILE = fopen((*vfs) -> filename, "r+");
-	}*/
+	}
 	
 }
 

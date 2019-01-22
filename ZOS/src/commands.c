@@ -58,15 +58,6 @@ void copy_file(VFS **vfs, char *tok) {
 	}
 
 	copy_given_file(vfs, dest_folder, moved_file, destination);
-
-	/*
-	1) Zkopíruje soubor s1 do umístění s2
-	cp s1 s2
-	Možný výsledek:
-	OK
-	FILE NOT FOUND (není zdroj)
-	PATH NOT FOUND (neexistuje cílová cesta)
-	*/
 }
 
 void move_file(VFS **vfs, char *tok) {
@@ -401,7 +392,7 @@ void hd_to_pseudo(VFS **vfs, char *tok) {
 
 	MFT_ITEM *dest = NULL;
 
-	if (strlen(tok) == 1) dest = (*vfs) -> mft -> items[0];
+	if (strlen(tok) == 1 || (strlen(tok) == 2 && tok[0] == 46)) dest = (*vfs) -> mft -> items[0];
 	else dest = get_mft_item_from_path((*vfs), tok);	 
 
 	if (dest == NULL) {
@@ -441,6 +432,7 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 		printf("DESTINATION NOT DEFINED\n");
 		return;
 	}
+	if (strlen(tok) == 1 || (strlen(tok) == 2 && tok[0] == 46)) tok[0] = '\0';
 	strcpy(dest, tok);
 
 	if (strlen(dest) > 0 && dest[strlen(dest) - 1] == '\n') dest[strlen(dest) - 1] = '\0';	
@@ -532,12 +524,15 @@ void file_formatting(VFS **vfs, char *tok) {
 	printf("Data file with name %s was formated. Disk size = %d\n", (*vfs) -> filename, disk_size);
 }
 
-void defrag() {
-	/*
-	Defragmentace (defrag) – pokud login studenta začíná a-i
-	Soubory se budou skládat pouze z 1 fragmentu (předpokládáme dostatek volného místa –
-	minimálně ve velikosti největšího souboru).
-	*/
+void defrag(VFS **vfs) {
+	printf("Starting defragmentation\n");
+
+	defrag_copy_data_temp_file(vfs);
+	defrag_bitmap(vfs);
+	defrag_init_mft_items(vfs);
+	remove(TEMP_DATA_FILENAME);
+
+	printf("Defragmentation ends successfully\n");
 }
 
 void full_info(VFS *vfs) {

@@ -75,6 +75,16 @@ int used_clusters(BITMAP *bitmap) {
 	return clusters_used;
 }
 
+void defrag_bitmap(VFS **vfs) {
+	int i;
+	for (i = 0; i < (*vfs) -> bitmap -> length; i++) {
+		(*vfs) -> bitmap -> data[i] = 0;
+	}
+
+	fwrite_bitmap(vfs);
+	printf("Bitmap cleared\n");
+}
+
 void print_bitmap(BITMAP *bitmap) {
 	int clusters_used = used_clusters(bitmap);
 	printf("\nBitmap:\n----------------\n");

@@ -6,6 +6,8 @@
 #define MFT_SIZE_RATIO 0.1
 #define DIRECTORY_SIZE 1
 
+#define TEMP_DATA_FILENAME "ntfs_temp.dat"
+
 #define MAX_LENGTH_OF_COMMAND 100
 #define SHELL_CHAR "$"
 #define ROOT_CHAR "~"
@@ -128,12 +130,15 @@ int find_folder_id(MFT *mft, char *path);
 void print_folder_content(MFT *mft, int parentID);
 int is_folder_empty(MFT *mft, int folderID);
 void fwrite_mft(VFS **vfs);
-void fwrite_mft_item(VFS **vfs);
+void fwrite_mft_item(VFS **vfs, int uid);
 int check_if_folder_contains_item(MFT *mft, MFT_ITEM *folder, char *item_name);
 void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM *dest);
 void remove_given_file(VFS **vfs, MFT_ITEM *file);
 void print_file_content(VFS *vfs, MFT_ITEM *item);
 void copy_given_file(VFS **vfs, MFT_ITEM *dest_folder, MFT_ITEM *file, char *destination);
+void defrag_copy_data_temp_file(VFS **vfs);
+void defrag_init_mft_items(VFS **vfs);
+void defrag_copy_data_back_from_temp_file(VFS **vfs, MFT_ITEM *item);
 void print_mft(MFT *mft);
 
 //bitmap.c
@@ -143,6 +148,7 @@ int bitmap_contains_free_cluster(BITMAP *bitmap);
 struct the_fragment_temp *find_free_cluster(BITMAP **bitmap, int needed_count);
 int used_clusters(BITMAP *bitmap);
 void fwrite_bitmap(VFS **vfs);
+void defrag_bitmap(VFS **vfs);
 void print_bitmap(BITMAP *bitmap);
 
 //commands.c
@@ -160,7 +166,7 @@ void hd_to_pseudo(VFS **vfs, char *tok);
 void pseudo_to_hd(VFS **vfs, char *tok);
 int load_commands(FILE **file_with_commands, char *tok);
 void file_formatting(VFS **vfs, char *tok);
-void defrag();
+void defrag(VFS **vfs);
 void full_info(VFS *vfs);
 void commands_help();
 
