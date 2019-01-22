@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
 			hd_to_pseudo(&vfs, tok);
 		}
 		else if (compare_two_string(tok, PSEUDO_TO_HD) == 0) {
-			pseudo_to_hd(&vfs, tok); //not implemented
+			pseudo_to_hd(&vfs, tok);
 		}
 		else if (compare_two_string(tok, LOAD_COMMANDS) == 0) {
 			is_used_file = load_commands(&file_with_commands, tok); 

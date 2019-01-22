@@ -58,14 +58,35 @@ void move_file(VFS **vfs, char *tok) {
 	char destination[MAX_LENGTH_OF_COMMAND];
 	strcpy(destination, tok);
 
-	/*
-	2) Přesune soubor s1 do umístění s2
-	mv s1 s2
-	Možný výsledek:
-	OK
-	FILE NOT FOUND (není zdroj)
-	PATH NOT FOUND (neexistuje cílová cesta)
-	*/
+	MFT_ITEM *moved_file = get_mft_item_from_path((*vfs), source);
+	MFT_ITEM *dest_folder = get_mft_item_from_path((*vfs), destination);
+
+	if (moved_file == NULL) {
+		printf("FILE NOT FOUND\n");
+		return;
+	}
+	else if (moved_file -> isDirectory) {
+		printf("Moved file is DIRECTORY!\n");
+		return;
+	}
+	
+	if (dest_folder == NULL) {
+		printf("PATH NOT FOUND\n");
+		return;
+	}
+	else if (!dest_folder -> isDirectory) {
+		printf("Destination directory is FILE!\n");
+		return;
+	}
+
+	
+	if (check_if_folder_contains_item((*vfs) -> mft, dest_folder, moved_file -> item_name)) {
+		printf("Directory '%s' already contains file/directory with name '%s'\n", dest_folder -> item_name, moved_file -> item_name);
+		return;	
+	}
+
+	(*vfs) -> mft -> items[moved_file -> uid] -> parentID = dest_folder -> uid;
+	printf("File '%s' was moved to directory '%s'\n", moved_file -> item_name, dest_folder -> item_name);
 }
 
 void remove_file(VFS **vfs, char *tok) {
@@ -421,20 +442,12 @@ void pseudo_to_hd(VFS **vfs, char *tok) {
 		}
 		fflush(file_dest);
 		fclose(file_dest);
+		printf("File '%s' SUCCESSFULLY COPIED\n", item_source -> item_name);
 	}
 	else {
 		printf("PATH NOT FOUND\n");
 		return;
 	}
-
-	/*
-	12) Nahraje soubor s1 z pseudoNTFS do umístění s2 na pevném disku
-	outcp s1 s2
-	Možný výsledek:
-	OK
-	FILE NOT FOUND (není zdroj)
-	PATH NOT FOUND (neexistuje cílová cesta)
-	*/
 }
 
 int load_commands(FILE **file_with_commands, char *tok) {
