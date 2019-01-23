@@ -138,7 +138,7 @@ void print_file_content(VFS *vfs, MFT_ITEM *item);
 void copy_given_file(VFS **vfs, MFT_ITEM *dest_folder, MFT_ITEM *file, char *destination);
 void defrag_copy_data_temp_file(VFS **vfs);
 void defrag_init_mft_items(VFS **vfs);
-void defrag_copy_data_back_from_temp_file(VFS **vfs, MFT_ITEM *item);
+void defrag_copy_data_back_from_temp_file(VFS **vfs, MFT_ITEM *item, int fragment_count, int start_id[], int count[]);
 void print_mft(MFT *mft);
 
 //bitmap.c

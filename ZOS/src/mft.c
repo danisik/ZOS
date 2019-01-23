@@ -258,7 +258,9 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 		printf("File '%s' CREATED\n", filename);
 	}
 
-	int i, j;
+	int i;
+
+	MFT_ITEM *item = find_mft_item_by_uid((*vfs) -> mft, (*vfs) -> mft -> size - 1);
 
 	int file_part = 1;
 	if (file_size != 0) {
@@ -266,10 +268,9 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 		if (file_size % CLUSTER_SIZE != 0) file_part++;
 	}
 
+
 	int read_size = CLUSTER_SIZE;
 	char buffer[file_part][read_size];
-	
-	MFT_ITEM *item = find_mft_item_by_uid((*vfs) -> mft, (*vfs) -> mft -> size - 1);
 
 	for (i = 0; i < file_part; i++) {
 		fseek(source, i * read_size, SEEK_SET);
@@ -277,12 +278,25 @@ void create_file_from_FILE(VFS **vfs, FILE *source, char *source_name, MFT_ITEM 
 		if (i == (file_part - 1)) buffer[i][strlen(buffer[i]) - 1] = '\0';
 	}
 
-	for (i = 0; i < item -> fragments_created; i++) {
-		for (j = 0; j < item -> fragment_count[i]; j++) {
-			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET);
-			fwrite(buffer[i+j],CLUSTER_SIZE, 1, (*vfs) -> FILE); 
-			fflush((*vfs) -> FILE);
+	int position = 0;
+	int plus_cluster = 0;
+	long actual_size = item -> item_size;
+	for (i = 0; i < file_part; i++) {
+		fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[position] + plus_cluster), SEEK_SET);
+		plus_cluster++;
+		if (actual_size >= CLUSTER_SIZE) {
+			actual_size -= CLUSTER_SIZE;
+			fwrite(buffer[i], CLUSTER_SIZE, 1, (*vfs) -> FILE); 
 		}
+		else {
+			fwrite(buffer[i], actual_size, 1, (*vfs) -> FILE); 
+			break;
+		}
+		if (plus_cluster == item -> fragment_count[position]) {
+			position++;
+			plus_cluster = 0;
+		}
+		fflush((*vfs) -> FILE);
 	}
 }
 
@@ -423,37 +437,62 @@ void defrag_init_mft_items(VFS **vfs) {
 			mft_item_init(vfs, (*vfs) -> mft -> size, (*vfs) -> mft -> items[i] -> parentID, (*vfs) -> mft -> items[i] -> item_name, 1, DIRECTORY_SIZE);
 		}
 		else {
+			int fragment_count = (*vfs) -> mft -> items[i] -> fragments_created;
+			int start_id[fragment_count], count[fragment_count]; 
+
+			int j;
+			for (j = 0; j < fragment_count; j++) {
+				start_id[j] = (*vfs) -> mft -> items[i] -> start_cluster_ID[j];
+				count[j] = (*vfs) -> mft -> items[i] -> fragment_count[j];
+			}
+
 			mft_item_init(vfs, (*vfs) -> mft -> size, (*vfs) -> mft -> items[i] -> parentID, (*vfs) -> mft -> items[i] -> item_name, 0, (*vfs) -> mft -> items[i] -> item_size);
-			defrag_copy_data_back_from_temp_file(vfs, find_mft_item_by_uid((*vfs) -> mft, (*vfs) -> mft -> size - 1));
+			defrag_copy_data_back_from_temp_file(vfs, find_mft_item_by_uid((*vfs) -> mft, (*vfs) -> mft -> size - 1), fragment_count, start_id, count);
 		}
 	}
 	printf("MFT Items fragments successfully initialized\n");
 }
 
-void defrag_copy_data_back_from_temp_file(VFS **vfs, MFT_ITEM *item) {
-	int i, j;
+void defrag_copy_data_back_from_temp_file(VFS **vfs, MFT_ITEM *item, int fragment_count, int start_id[], int count[]) {
+	int i;
 	FILE *temp_data_file = fopen(TEMP_DATA_FILENAME, "wb");
-	
-	char buffer[CLUSTER_SIZE];
-	long actual_size = 0;
 
-	for (i = 0; i < item -> fragments_created; i++) {
-		for (j = 0; j < item -> fragment_count[i]; j++) {
-			fseek(temp_data_file, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET); 
-			fread(buffer, CLUSTER_SIZE, 1, temp_data_file);	
-
-			fseek((*vfs) -> FILE, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(item -> start_cluster_ID[i] + j), SEEK_SET); 
-			if (actual_size >= CLUSTER_SIZE) {
-				actual_size -= CLUSTER_SIZE;
-				fwrite(buffer, CLUSTER_SIZE, 1, (*vfs) -> FILE); 
-			}
-			else {
-				fwrite(buffer, actual_size, 1, (*vfs) -> FILE); 
-				break;
-			}
-			fflush((*vfs) -> FILE);
-		}
+	int file_part = 1;
+	if (item -> item_size != 0) {
+		file_part = item -> item_size / CLUSTER_SIZE;
+		if (item -> item_size % CLUSTER_SIZE != 0) file_part++;
 	}
+
+
+	int read_size = CLUSTER_SIZE;
+	char buffer[file_part][read_size];
+
+	for (i = 0; i < file_part; i++) {
+		fseek(temp_data_file, i * read_size, SEEK_SET);
+		fread(buffer[i], read_size, 1, temp_data_file);
+	}
+
+	int position = 0;
+	int plus_cluster = 0;
+	long actual_size = item -> item_size;
+	for (i = 0; i < file_part; i++) {
+		fseek(temp_data_file, (*vfs) -> boot_record -> data_start_address + 1 + CLUSTER_SIZE*(start_id[position] + plus_cluster), SEEK_SET);
+		plus_cluster++;
+		if (actual_size >= CLUSTER_SIZE) {
+			actual_size -= CLUSTER_SIZE;
+			fwrite(buffer[i], CLUSTER_SIZE, 1, (*vfs) -> FILE); 
+		}
+		else {
+			fwrite(buffer[i], actual_size, 1, (*vfs) -> FILE); 
+			break;
+		}
+		if (plus_cluster == count[position]) {
+			position++;
+			plus_cluster = 0;
+		}
+		fflush((*vfs) -> FILE);
+	}
+
 	fflush((*vfs) -> FILE);
 }
 
