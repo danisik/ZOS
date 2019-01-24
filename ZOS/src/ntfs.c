@@ -26,6 +26,21 @@ int main(int argc, char *argv[]) {
 	}
 	*/
 
+	/*
+	FILE *temp_data_file = fopen(TEMP_DATA_FILENAME, "rb");
+	fseek(temp_data_file, 0, SEEK_END);
+	int file_size = ftell(temp_data_file);
+	fseek(temp_data_file, 0, SEEK_SET);
+
+	char c;
+	fseek(temp_data_file, 14682, SEEK_SET);
+	int i;
+	for (i = 0; i < 2000; i++) {
+		c = fgetc(temp_data_file);
+		printf("%c", c);
+	}
+	*/
+
 	printf("WELCOME IN PSEUDO-NTFS (iNTFS)\n\n");
 	vfs_init(&vfs, filename, DISK_SIZE, 0);
 	

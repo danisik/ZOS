@@ -529,6 +529,15 @@ void defrag(VFS **vfs) {
 
 	defrag_copy_data_temp_file(vfs);
 	defrag_bitmap(vfs);
+
+	(*vfs) -> FILE = fopen((*vfs) -> filename, "r+");
+	fseek((*vfs) -> FILE, 0, SEEK_SET);    
+	fwrite((*vfs) -> boot_record, sizeof(BOOT_RECORD), 1, (*vfs) -> FILE);
+	fflush((*vfs) -> FILE);
+	fwrite_mft(vfs);
+	fwrite_bitmap(vfs);
+	fflush((*vfs) -> FILE);
+	
 	defrag_init_mft_items(vfs);
 	remove(TEMP_DATA_FILENAME);
 

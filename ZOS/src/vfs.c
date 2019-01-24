@@ -22,7 +22,7 @@ void vfs_init(VFS **vfs, char *filename, size_t disk_size, int formatting) {
 
 	FILE *test_if_exists = fopen(filename, "r+");
 	if (test_if_exists == NULL || formatting == 1) {
-		(*vfs) -> FILE = fopen((*vfs) -> filename, "wb");
+		(*vfs) -> FILE = fopen((*vfs) -> filename, "w+");
 		if (formatting == 0) printf("Data file with name %s not found, creating new\n", filename);
 
 		BOOT_RECORD *boot_record;
